@@ -12,7 +12,9 @@ A CLI tool for managing Python virtual environments using [uv](https://github.co
 - 🎯 **Simple**: Intuitive CLI commands for common virtual environment operations
 - 🔒 **Reproducible**: Lockfile support for consistent environments across systems
 - 🐚 **Shell Integration**: Easy activation/deactivation in bash, zsh, fish, and PowerShell
-- 📊 **Metadata**: Track environment usage and metadata
+- 📊 **Rich Metadata**: Track environment descriptions, tags, usage patterns, and project links
+- 🧹 **Smart Cleanup**: Automatic detection and removal of unused environments
+- 📈 **Usage Analytics**: Detailed insights into environment usage and health status
 
 ## Quick Start
 
@@ -45,6 +47,12 @@ uvenv python list
 # Create a virtual environment
 uvenv create myproject 3.11
 
+# Create with rich metadata
+uvenv create myapi 3.11 --description "Customer API" --add-tag production --add-tag api
+
+# Interactive metadata entry (prompts for description and tags)
+uvenv create webapp 3.11
+
 # Activate the environment (with shell integration)
 uvenv activate myproject
 
@@ -53,6 +61,18 @@ uvenv list
 
 # Create a lockfile
 uvenv lock myproject
+
+# View environment analytics
+uvenv analytics myproject
+
+# Check environment health
+uvenv status
+
+# Clean up unused environments
+uvenv cleanup --dry-run
+
+# Edit environment metadata
+uvenv edit myproject --description "My web API" --add-tag "production"
 
 # Remove an environment
 uvenv remove myproject
@@ -91,19 +111,24 @@ This **just shows** the activation command. You need to copy and run the output 
 
 ## Commands
 
-| Command                          | Description                                     |
-| -------------------------------- | ----------------------------------------------- |
-| `uvenv python install <version>` | Install a Python version using uv               |
-| `uvenv python list`              | List available and installed Python versions    |
-| `uvenv create <name> <version>`  | Create a new virtual environment                |
-| `uvenv activate <name>`          | Print shell activation snippet                  |
-| `uvenv list`                     | List all virtual environments                   |
-| `uvenv remove <name>`            | Remove a virtual environment                    |
-| `uvenv lock <name>`              | Generate a lockfile for the environment         |
-| `uvenv thaw <name>`              | Rebuild environment from lockfile               |
-| `uvenv shell-integration`        | Install shell integration for direct activation |
-| `uvenv --install-completion`     | Install tab completion for your shell           |
-| `uvenv --show-completion`        | Show completion script for manual installation  |
+| Command                          | Description                                         |
+| -------------------------------- | --------------------------------------------------- |
+| `uvenv python install <version>` | Install a Python version using uv                   |
+| `uvenv python list`              | List available and installed Python versions        |
+| `uvenv create <name> <version>`  | Create a virtual environment with optional metadata |
+| `uvenv activate <name>`          | Print shell activation snippet                      |
+| `uvenv list`                     | List all virtual environments                       |
+| `uvenv list --usage`             | List environments with usage statistics             |
+| `uvenv remove <name>`            | Remove a virtual environment                        |
+| `uvenv lock <name>`              | Generate a lockfile for the environment             |
+| `uvenv thaw <name>`              | Rebuild environment from lockfile                   |
+| `uvenv analytics [name]`         | Show usage analytics and insights                   |
+| `uvenv status`                   | Show environment health overview                    |
+| `uvenv cleanup`                  | Clean up unused environments                        |
+| `uvenv edit <name>`              | Edit environment metadata (description, tags)       |
+| `uvenv shell-integration`        | Install shell integration for direct activation     |
+| `uvenv --install-completion`     | Install tab completion for your shell               |
+| `uvenv --show-completion`        | Show completion script for manual installation      |
 
 ## Environment Storage
 
@@ -115,9 +140,39 @@ Virtual environments are stored in `~/.uvenv/`:
 │   ├── bin/activate           # Activation script
 │   ├── lib/python3.11/        # Python packages
 │   ├── uvenv.lock            # Lockfile (TOML format)
-│   └── uvenv.meta.json       # Metadata
+│   └── uvenv.meta.json       # Metadata (usage, tags, description)
 └── another-env/
     └── ...
+```
+
+## Rich Metadata and Analytics
+
+uvenv tracks rich metadata for each environment including:
+
+- **Usage Statistics**: Activation count, last used date, usage frequency
+- **Descriptions and Tags**: Organize environments with custom descriptions and tags
+- **Project Linking**: Associate environments with project directories
+- **Size Tracking**: Monitor disk usage for cleanup decisions
+
+### Analytics Commands
+
+```bash
+# View detailed analytics for an environment
+uvenv analytics myproject
+
+# Check health status of all environments
+uvenv status
+
+# Find and clean unused environments
+uvenv cleanup --dry-run
+uvenv cleanup --unused-for 60 --interactive
+
+# Edit environment metadata
+uvenv edit myproject --description "Production API server"
+uvenv edit myproject --add-tag "production" --add-tag "api"
+
+# List with usage information
+uvenv list --usage --sort-by usage
 ```
 
 ## Shell Integration
@@ -259,6 +314,7 @@ mypy src/
 ## Documentation
 
 - 📖 [Complete Documentation](docs/index.md) - Comprehensive user guide
+- 📊 [Rich Metadata & Analytics](docs/analytics.md) - Usage tracking and environment insights
 - 🏗️ [Design Principles](docs/principles.md) - Core principles and architecture
 - 🗺️ [Roadmap](docs/roadmap.md) - Future plans and development phases
 - 📐 [Design Document](docs/design.md) - Technical design and implementation details

@@ -3,6 +3,7 @@
 ## 📚 Documentation Navigation
 
 - **[User Guide](index.md)** - Complete usage documentation (this page)
+- **[Rich Metadata & Analytics](analytics.md)** - Usage tracking and environment analytics
 - **[Design Principles](principles.md)** - Core principles and architecture decisions
 - **[Roadmap](roadmap.md)** - Future development plans and phases
 - **[Design Document](design.md)** - Technical implementation details
