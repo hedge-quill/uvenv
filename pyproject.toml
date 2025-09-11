@@ -1,0 +1,110 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "uvenv"
+version = "0.1.0"
+description = "A CLI tool for managing Python virtual environments using uv"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{ name = "Your Name", email = "your.email@example.com" }]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = ["typer>=0.9.0", "rich>=13.0.0", "toml>=0.10.2"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+    "pre-commit>=3.0.0",
+    "types-toml>=0.10.8",
+]
+
+[project.scripts]
+uvenv = "uvenv.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/mgale694/uvenv"
+Repository = "https://github.com/mgale694/uvenv"
+Issues = "https://github.com/mgale694/uvenv/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/uvenv"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "--cov=uvenv --cov-report=term-missing"
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "ARG", # flake8-unused-arguments
+    "C90", # mccabe
+    "T20", # flake8-print
+    "TID", # flake8-tidy-imports
+    "ICN", # flake8-import-conventions
+    "RET", # flake8-return
+    "SIM", # flake8-simplify
+    "S",   # flake8-bandit
+]
+ignore = [
+    "S101", # assert used (pytest uses assertions)
+    "S603", # subprocess-popen-shell-false (intentional for uv calls)
+    "S607", # subprocess-partial-path (uv is expected to be in PATH)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*" = ["T20", "S101", "ARG", "TID252"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+ignore_missing_imports = false
+# Allow untyped decorators for Typer commands
+disable_error_code = ["misc"]
+
+# Specific overrides for third-party libraries
+[[tool.mypy.overrides]]
+module = ["typer.*", "rich.*"]
+ignore_missing_imports = true
