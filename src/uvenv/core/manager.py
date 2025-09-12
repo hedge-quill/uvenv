@@ -1,6 +1,9 @@
 """Environment management for uvenv."""
 
+from __future__ import annotations
+
 import json
+import os
 import shutil
 import subprocess
 from datetime import datetime
@@ -20,16 +23,26 @@ class EnvironmentManager:
         """
         self.path_manager = PathManager(base_dir)
 
-    def create(self, name: str, python_version: str) -> None:
+    def create(
+        self,
+        name: str,
+        python_version: str,
+        description: str = "",
+        tags: list[str] | None = None,
+    ) -> None:
         """Create a new virtual environment.
 
         Args:
             name: Environment name
             python_version: Python version to use
+            description: Optional description for the environment
+            tags: Optional list of tags for the environment
 
         Raises:
             RuntimeError: If environment creation fails
         """
+        if tags is None:
+            tags = []
         if self.path_manager.environment_exists(name):
             raise RuntimeError(f"Environment '{name}' already exists")
 
@@ -42,7 +55,7 @@ class EnvironmentManager:
             _ = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
             # Create metadata file
-            self._create_metadata(name, python_version)
+            self._create_metadata(name, python_version, description, tags)
 
         except subprocess.CalledProcessError as e:
             # Clean up partial environment if creation failed
@@ -104,19 +117,35 @@ class EnvironmentManager:
         # This is a simplified version - real implementation would detect shell
         return f"source {bin_path}/activate"
 
-    def _create_metadata(self, name: str, python_version: str) -> None:
+    def _create_metadata(
+        self,
+        name: str,
+        python_version: str,
+        description: str = "",
+        tags: list[str] | None = None,
+    ) -> None:
         """Create metadata file for an environment.
 
         Args:
             name: Environment name
             python_version: Python version used
+            description: Optional description for the environment
+            tags: Optional list of tags for the environment
         """
+        if tags is None:
+            tags = []
+
         metadata = {
             "name": name,
+            "description": description,
+            "tags": tags,
             "python_version": python_version,
             "created_at": datetime.now().isoformat(),
             "last_used": None,
+            "usage_count": 0,
             "active": False,
+            "project_root": None,
+            "size_bytes": None,
         }
 
         metadata_path = self.path_manager.get_metadata_path(name)
@@ -160,3 +189,157 @@ class EnvironmentManager:
                 pass  # Use defaults if metadata is corrupted
 
         return info
+
+    def update_usage(self, name: str) -> None:
+        """Update usage statistics for an environment.
+
+        Args:
+            name: Environment name
+
+        Raises:
+            RuntimeError: If environment doesn't exist
+        """
+        if not self.path_manager.environment_exists(name):
+            raise RuntimeError(f"Environment '{name}' does not exist")
+
+        metadata_path = self.path_manager.get_metadata_path(name)
+
+        # Load existing metadata or create default
+        if metadata_path.exists():
+            try:
+                with open(metadata_path) as f:
+                    metadata = json.load(f)
+            except (json.JSONDecodeError, OSError):
+                metadata = self._get_default_metadata(name)
+        else:
+            metadata = self._get_default_metadata(name)
+
+        # Update usage statistics
+        metadata["last_used"] = datetime.now().isoformat()
+        metadata["usage_count"] = metadata.get("usage_count", 0) + 1
+
+        # Save updated metadata
+        with open(metadata_path, "w") as f:
+            json.dump(metadata, f, indent=2)
+
+    def update_metadata_field(self, name: str, field: str, value: Any) -> None:
+        """Update a specific metadata field for an environment.
+
+        Args:
+            name: Environment name
+            field: Metadata field to update
+            value: New value for the field
+
+        Raises:
+            RuntimeError: If environment doesn't exist
+        """
+        if not self.path_manager.environment_exists(name):
+            raise RuntimeError(f"Environment '{name}' does not exist")
+
+        metadata_path = self.path_manager.get_metadata_path(name)
+
+        # Load existing metadata
+        if metadata_path.exists():
+            try:
+                with open(metadata_path) as f:
+                    metadata = json.load(f)
+            except (json.JSONDecodeError, OSError):
+                metadata = self._get_default_metadata(name)
+        else:
+            metadata = self._get_default_metadata(name)
+
+        # Update the field
+        metadata[field] = value
+
+        # Save updated metadata
+        with open(metadata_path, "w") as f:
+            json.dump(metadata, f, indent=2)
+
+    def get_metadata(self, name: str) -> dict[str, Any]:
+        """Get complete metadata for an environment.
+
+        Args:
+            name: Environment name
+
+        Returns:
+            Dictionary with complete metadata
+
+        Raises:
+            RuntimeError: If environment doesn't exist
+        """
+        if not self.path_manager.environment_exists(name):
+            raise RuntimeError(f"Environment '{name}' does not exist")
+
+        metadata_path = self.path_manager.get_metadata_path(name)
+
+        if metadata_path.exists():
+            try:
+                with open(metadata_path) as f:
+                    metadata = json.load(f)
+
+                # Ensure all expected fields exist
+                default_metadata = self._get_default_metadata(name)
+                for key, default_value in default_metadata.items():
+                    if key not in metadata:
+                        metadata[key] = default_value
+
+                return metadata
+            except (json.JSONDecodeError, OSError):
+                return self._get_default_metadata(name)
+        else:
+            return self._get_default_metadata(name)
+
+    def _get_default_metadata(self, name: str) -> dict[str, Any]:
+        """Get default metadata structure for an environment.
+
+        Args:
+            name: Environment name
+
+        Returns:
+            Default metadata dictionary
+        """
+        return {
+            "name": name,
+            "description": "",
+            "tags": [],
+            "python_version": "unknown",
+            "created_at": datetime.now().isoformat(),
+            "last_used": None,
+            "usage_count": 0,
+            "active": False,
+            "project_root": None,
+            "size_bytes": None,
+        }
+
+    def get_environment_size(self, name: str) -> int:
+        """Calculate the disk size of an environment in bytes.
+
+        Args:
+            name: Environment name
+
+        Returns:
+            Size in bytes
+
+        Raises:
+            RuntimeError: If environment doesn't exist
+        """
+        if not self.path_manager.environment_exists(name):
+            raise RuntimeError(f"Environment '{name}' does not exist")
+
+        env_path = self.path_manager.get_env_path(name)
+        total_size = 0
+
+        try:
+            for dirpath, _dirnames, filenames in os.walk(env_path):
+                for filename in filenames:
+                    filepath = os.path.join(dirpath, filename)
+                    try:
+                        total_size += os.path.getsize(filepath)
+                    except (OSError, FileNotFoundError):
+                        continue  # Skip files that can't be accessed
+        except OSError as e:
+            raise RuntimeError(
+                f"Failed to calculate size for environment '{name}'"
+            ) from e
+
+        return total_size

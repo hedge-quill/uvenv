@@ -1,10 +1,14 @@
 """CLI entrypoint for uvenv using Typer."""
 
+from __future__ import annotations
+
 import typer
+from datetime import datetime
 from rich.console import Console
 from rich.table import Table
 
 from uvenv import __version__
+from uvenv.core.analytics import AnalyticsManager
 from uvenv.core.freeze import FreezeManager
 from uvenv.core.manager import EnvironmentManager
 from uvenv.core.python import PythonManager
@@ -45,6 +49,7 @@ env_manager = EnvironmentManager()
 python_manager = PythonManager()
 freeze_manager = FreezeManager()
 activation_manager = ActivationManager()
+analytics_manager = AnalyticsManager()
 
 
 def complete_environment_names() -> list[str]:
@@ -146,14 +151,60 @@ def create(
         help="Python version for the environment",
         autocompletion=complete_python_versions,
     ),
+    description: str = typer.Option(
+        None, "--description", "-d", help="Description for the environment"
+    ),
+    add_tag: list[str] | None = typer.Option(
+        None,
+        "--add-tag",
+        "-t",
+        help="Add a tag to the environment (can be used multiple times)",
+    ),
 ) -> None:
     """Create a new virtual environment."""
     console.print(
         f"[green]Creating environment '{name}' with Python {python_version}...[/green]"
     )
+
+    # Handle mutable default
+    if add_tag is None:
+        add_tag = []
+
+    # Interactive flow if no description or tags provided
+    final_description = description
+    final_tags = list(add_tag)
+
+    if description is None:
+        final_description = typer.prompt(
+            "Description (optional, press Enter to skip)",
+            default="",
+            show_default=False,
+        )
+
+    if not add_tag:
+        # Interactive tag collection
+        console.print("[cyan]Add tags (optional):[/cyan]")
+        console.print(
+            "[dim]Press Enter after each tag, or just press Enter to finish[/dim]"
+        )
+
+        while True:
+            tag = typer.prompt("Tag", default="", show_default=False)
+            if not tag.strip():
+                break
+            final_tags.append(tag.strip())
+
     try:
-        env_manager.create(name, python_version)
+        env_manager.create(name, python_version, final_description, final_tags)
+
+        # Show creation summary
         console.print(f"[green]✓[/green] Environment '{name}' created successfully")
+
+        if final_description:
+            console.print(f"[dim]Description:[/dim] {final_description}")
+        if final_tags:
+            console.print(f"[dim]Tags:[/dim] {', '.join(final_tags)}")
+
     except Exception as e:
         console.print(f"[red]✗[/red] Failed to create environment '{name}': {e}")
         raise typer.Exit(1) from None
@@ -169,6 +220,9 @@ def activate(
 ) -> None:
     """Print shell activation snippet for the environment."""
     try:
+        # Update usage statistics when activating
+        env_manager.update_usage(name)
+
         activation_script = env_manager.get_activation_script(name)
         console.print(activation_script)
     except Exception as e:
@@ -177,7 +231,14 @@ def activate(
 
 
 @app.command(name="list")
-def env_list() -> None:
+def env_list(
+    show_usage: bool = typer.Option(
+        False, "--usage", "-u", help="Show usage statistics"
+    ),
+    sort_by: str = typer.Option(
+        "name", "--sort-by", help="Sort by: name, usage, size, last_used"
+    ),
+) -> None:
     """List all virtual environments."""
     try:
         environments = env_manager.list()
@@ -185,16 +246,114 @@ def env_list() -> None:
             console.print("[yellow]No virtual environments found[/yellow]")
             return
 
-        table = Table(title="Virtual Environments")
-        table.add_column("Name", style="cyan")
-        table.add_column("Python Version", style="green")
-        table.add_column("Path", style="blue")
-        table.add_column("Status", style="magenta")
+        # Get enhanced data if usage info is requested
+        if show_usage:
+            enhanced_envs = []
+            for env in environments:
+                metadata = env_manager.get_metadata(env["name"])
+                size = env_manager.get_environment_size(env["name"])
 
-        for env in environments:
-            table.add_row(
-                env["name"], env["python_version"], env["path"], env["status"]
-            )
+                enhanced_env = {
+                    **env,
+                    "usage_count": metadata.get("usage_count", 0),
+                    "last_used": metadata.get("last_used"),
+                    "size_bytes": size,
+                    "tags": metadata.get("tags", []),
+                    "description": metadata.get("description", ""),
+                }
+                enhanced_envs.append(enhanced_env)
+            environments = enhanced_envs
+
+        # Sort environments
+        if sort_by == "usage":
+            environments.sort(key=lambda x: x.get("usage_count", 0), reverse=True)
+        elif sort_by == "size":
+            environments.sort(key=lambda x: x.get("size_bytes", 0), reverse=True)
+        elif sort_by == "last_used":
+
+            def sort_key(x):
+                last_used = x.get("last_used")
+                if not last_used:
+                    return datetime.min
+                try:
+                    return datetime.fromisoformat(last_used.replace("Z", "+00:00"))
+                except (ValueError, AttributeError):
+                    return datetime.min
+
+            environments.sort(key=sort_key, reverse=True)
+        else:
+            environments.sort(key=lambda x: x["name"])
+
+        if show_usage:
+            table = Table(title="Virtual Environments (with Usage)")
+            table.add_column("Name", style="cyan")
+            table.add_column("Python", style="green")
+            table.add_column("Usage", style="blue")
+            table.add_column("Last Used", style="white")
+            table.add_column("Size", style="yellow")
+            table.add_column("Tags", style="magenta")
+            table.add_column("Description", style="dim")
+
+            for env in environments:
+                # Format last used
+                last_used = env.get("last_used")
+                if last_used:
+                    try:
+                        last_used_dt = datetime.fromisoformat(
+                            last_used.replace("Z", "+00:00")
+                        )
+                        days_ago = (
+                            datetime.now() - last_used_dt.replace(tzinfo=None)
+                        ).days
+                        if days_ago == 0:
+                            last_used_str = "Today"
+                        elif days_ago == 1:
+                            last_used_str = "Yesterday"
+                        else:
+                            last_used_str = f"{days_ago}d ago"
+                    except (ValueError, AttributeError):
+                        last_used_str = "Recently"
+                else:
+                    last_used_str = "Never"
+
+                # Format size
+                size_bytes = env.get("size_bytes", 0)
+                if size_bytes < 1024 * 1024:
+                    size_str = f"{size_bytes / 1024:.0f}KB"
+                elif size_bytes < 1024 * 1024 * 1024:
+                    size_str = f"{size_bytes / (1024 * 1024):.0f}MB"
+                else:
+                    size_str = f"{size_bytes / (1024 * 1024 * 1024):.1f}GB"
+
+                # Format tags
+                tags = env.get("tags", [])
+                tags_str = ", ".join(tags) if tags else ""
+
+                # Truncate description
+                description = env.get("description", "")
+                if len(description) > 30:
+                    description = description[:27] + "..."
+
+                table.add_row(
+                    env["name"],
+                    env["python_version"],
+                    str(env.get("usage_count", 0)),
+                    last_used_str,
+                    size_str,
+                    tags_str,
+                    description,
+                )
+        else:
+            table = Table(title="Virtual Environments")
+            table.add_column("Name", style="cyan")
+            table.add_column("Python Version", style="green")
+            table.add_column("Path", style="blue")
+            table.add_column("Status", style="magenta")
+
+            for env in environments:
+                table.add_row(
+                    env["name"], env["python_version"], env["path"], env["status"]
+                )
 
         console.print(table)
     except Exception as e:
@@ -316,6 +475,476 @@ def shell_integration(
 
     except Exception as e:
         console.print(f"[red]✗[/red] Failed to generate shell integration: {e}")
+        raise typer.Exit(1) from None
+
+
+@app.command()
+def analytics(
+    name: str = typer.Argument(
+        None,
+        help="Environment name for detailed analytics (optional)",
+        autocompletion=complete_environment_names,
+    ),
+    detailed: bool = typer.Option(
+        False, "--detailed", "-d", help="Show detailed analytics"
+    ),
+) -> None:
+    """Show environment usage analytics."""
+    try:
+        if name:
+            # Show analytics for specific environment
+            analytics_data = analytics_manager.get_environment_analytics(name)
+            metadata = analytics_data["metadata"]
+            derived = analytics_data["derived_stats"]
+            size_info = analytics_data["size_info"]
+
+            console.print(f"\n[bold cyan]Analytics for '{name}'[/bold cyan]")
+
+            # Basic info
+            table = Table(title="Environment Information")
+            table.add_column("Property", style="cyan")
+            table.add_column("Value", style="white")
+
+            table.add_row("Name", metadata.get("name", "unknown"))
+            table.add_row("Python Version", metadata.get("python_version", "unknown"))
+            table.add_row(
+                "Description", metadata.get("description", "") or "No description"
+            )
+            table.add_row("Tags", ", ".join(metadata.get("tags", [])) or "No tags")
+            table.add_row("Size", size_info["size_human"])
+
+            console.print(table)
+
+            # Usage statistics
+            usage_table = Table(title="Usage Statistics")
+            usage_table.add_column("Metric", style="cyan")
+            usage_table.add_column("Value", style="white")
+
+            usage_table.add_row("Usage Count", str(metadata.get("usage_count", 0)))
+            usage_table.add_row("Last Used", metadata.get("last_used") or "Never")
+
+            if derived["age_days"] is not None:
+                usage_table.add_row("Age (days)", str(derived["age_days"]))
+
+            if derived["days_since_use"] is not None:
+                usage_table.add_row("Days Since Use", str(derived["days_since_use"]))
+            else:
+                usage_table.add_row("Days Since Use", "Never used")
+
+            usage_table.add_row(
+                "Usage Frequency", f"{derived['usage_frequency']:.3f}/day"
+            )
+
+            console.print(usage_table)
+
+        else:
+            # Show summary for all environments
+            summary = analytics_manager.get_usage_summary()
+
+            console.print(f"\n[bold cyan]Environment Usage Summary[/bold cyan]")
+
+            # Overall stats
+            stats_table = Table(title="Overall Statistics")
+            stats_table.add_column("Metric", style="cyan")
+            stats_table.add_column("Value", style="white")
+
+            stats_table.add_row(
+                "Total Environments", str(summary["total_environments"])
+            )
+            stats_table.add_row(
+                "Active Environments", str(summary["active_environments"])
+            )
+            stats_table.add_row(
+                "Unused Environments", str(summary["unused_environments"])
+            )
+
+            # Convert total size to human readable
+            total_bytes = summary["total_size_bytes"]
+            if total_bytes < 1024 * 1024:
+                size_str = f"{total_bytes / 1024:.1f} KB"
+            elif total_bytes < 1024 * 1024 * 1024:
+                size_str = f"{total_bytes / (1024 * 1024):.1f} MB"
+            else:
+                size_str = f"{total_bytes / (1024 * 1024 * 1024):.1f} GB"
+
+            stats_table.add_row("Total Size", size_str)
+            stats_table.add_row("Total Usage Count", str(summary["total_usage_count"]))
+
+            console.print(stats_table)
+
+            # Environment list
+            if summary["environments"]:
+                env_table = Table(title="Environment Details")
+                env_table.add_column("Name", style="cyan")
+                env_table.add_column("Usage", style="green")
+                env_table.add_column("Last Used", style="white")
+                env_table.add_column("Size", style="blue")
+                env_table.add_column("Status", style="magenta")
+
+                for env in summary["environments"]:
+                    # Format last used
+                    last_used = env["last_used"]
+                    if last_used:
+                        if env["days_since_use"] is not None:
+                            if env["days_since_use"] == 0:
+                                last_used_str = "Today"
+                            elif env["days_since_use"] == 1:
+                                last_used_str = "Yesterday"
+                            else:
+                                last_used_str = f"{env['days_since_use']}d ago"
+                        else:
+                            last_used_str = "Recently"
+                    else:
+                        last_used_str = "Never"
+
+                    # Format size
+                    size_bytes = env["size_bytes"]
+                    if size_bytes < 1024 * 1024:
+                        size_str = f"{size_bytes / 1024:.0f}KB"
+                    elif size_bytes < 1024 * 1024 * 1024:
+                        size_str = f"{size_bytes / (1024 * 1024):.0f}MB"
+                    else:
+                        size_str = f"{size_bytes / (1024 * 1024 * 1024):.1f}GB"
+
+                    # Status
+                    status = "⚠️ Unused" if env["is_unused"] else "✅ Active"
+
+                    env_table.add_row(
+                        env["name"],
+                        str(env["usage_count"]),
+                        last_used_str,
+                        size_str,
+                        status,
+                    )
+
+                console.print(env_table)
+
+    except Exception as e:
+        console.print(f"[red]✗[/red] Failed to get analytics: {e}")
+        raise typer.Exit(1) from None
+
+
+@app.command()
+def status() -> None:
+    """Show environment health overview."""
+    try:
+        summary = analytics_manager.get_usage_summary()
+
+        console.print(f"\n[bold cyan]Environment Health Overview[/bold cyan]")
+
+        # Quick stats
+        total = summary["total_environments"]
+        unused = summary["unused_environments"]
+
+        if total == 0:
+            console.print("[yellow]No environments found[/yellow]")
+            return
+
+        # Health summary
+        health_table = Table()
+        health_table.add_column("Environment", style="cyan")
+        health_table.add_column("Last Used", style="white")
+        health_table.add_column("Usage Count", style="green")
+        health_table.add_column("Size", style="blue")
+        health_table.add_column("Health", style="magenta")
+
+        for env in summary["environments"]:
+            # Health status
+            usage_count = env["usage_count"]
+            days_since_use = env["days_since_use"]
+
+            if usage_count == 0:
+                health = "🔴 Never used"
+            elif days_since_use is None:
+                health = "🟡 Recently created"
+            elif days_since_use > 90:
+                health = "🔴 Stale (90+ days)"
+            elif days_since_use > 30:
+                health = "🟡 Unused (30+ days)"
+            elif usage_count < 5:
+                health = "🟡 Low usage"
+            else:
+                health = "🟢 Healthy"
+
+            # Format last used
+            if env["last_used"]:
+                if days_since_use is not None:
+                    if days_since_use == 0:
+                        last_used_str = "Today"
+                    elif days_since_use == 1:
+                        last_used_str = "Yesterday"
+                    else:
+                        last_used_str = f"{days_since_use}d ago"
+                else:
+                    last_used_str = "Recently"
+            else:
+                last_used_str = "Never"
+
+            # Format size
+            size_bytes = env["size_bytes"]
+            if size_bytes < 1024 * 1024:
+                size_str = f"{size_bytes / 1024:.0f}KB"
+            elif size_bytes < 1024 * 1024 * 1024:
+                size_str = f"{size_bytes / (1024 * 1024):.0f}MB"
+            else:
+                size_str = f"{size_bytes / (1024 * 1024 * 1024):.1f}GB"
+
+            health_table.add_row(
+                env["name"], last_used_str, str(usage_count), size_str, health
+            )
+
+        console.print(health_table)
+
+        # Summary message
+        if unused > 0:
+            console.print(
+                f"\n[yellow]💡 Found {unused} unused environment(s). Consider running `uvenv cleanup --dry-run` to review.[/yellow]"
+            )
+        else:
+            console.print(
+                f"\n[green]✅ All {total} environments are being used actively![/green]"
+            )
+
+    except Exception as e:
+        console.print(f"[red]✗[/red] Failed to get status: {e}")
+        raise typer.Exit(1) from None
+
+
+@app.command()
+def cleanup(
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Show what would be removed without actually removing"
+    ),
+    unused_for: int = typer.Option(
+        30, "--unused-for", help="Days since last use to consider unused"
+    ),
+    low_usage: bool = typer.Option(
+        False, "--low-usage", help="Include environments with low usage (≤5 uses)"
+    ),
+    interactive: bool = typer.Option(
+        False, "--interactive", "-i", help="Ask before removing each environment"
+    ),
+    force: bool = typer.Option(
+        False, "--force", "-f", help="Remove without confirmation"
+    ),
+) -> None:
+    """Clean up unused environments."""
+    try:
+        unused_envs = analytics_manager.find_unused_environments(unused_for)
+
+        if low_usage:
+            low_usage_envs = analytics_manager.find_low_usage_environments(5)
+            # Merge lists, avoiding duplicates
+            unused_names = {env["name"] for env in unused_envs}
+            for env in low_usage_envs:
+                if env["name"] not in unused_names:
+                    unused_envs.append(env)
+
+        if not unused_envs:
+            console.print(
+                f"[green]✅ No environments found that are unused for {unused_for}+ days[/green]"
+            )
+            return
+
+        # Calculate total size to be freed
+        total_size = sum(env["size_bytes"] for env in unused_envs)
+        if total_size < 1024 * 1024:
+            size_str = f"{total_size / 1024:.1f} KB"
+        elif total_size < 1024 * 1024 * 1024:
+            size_str = f"{total_size / (1024 * 1024):.1f} MB"
+        else:
+            size_str = f"{total_size / (1024 * 1024 * 1024):.1f} GB"
+
+        console.print(
+            f"\n[yellow]🗑️  Found {len(unused_envs)} environment(s) to clean up:[/yellow]"
+        )
+
+        # Show what will be removed
+        cleanup_table = Table()
+        cleanup_table.add_column("Environment", style="cyan")
+        cleanup_table.add_column("Last Used", style="white")
+        cleanup_table.add_column("Usage Count", style="green")
+        cleanup_table.add_column("Size", style="blue")
+        cleanup_table.add_column("Reason", style="yellow")
+
+        for env in unused_envs:
+            # Format last used
+            days_since_use = env["days_since_use"]
+            if days_since_use == "never":
+                last_used_str = "Never"
+                reason = "Never used"
+            elif days_since_use == "unknown":
+                last_used_str = "Unknown"
+                reason = "Unknown usage"
+            else:
+                last_used_str = f"{days_since_use}d ago"
+                reason = f"Unused {days_since_use}d"
+
+            # Add low usage reason if applicable
+            if env["usage_count"] <= 5 and days_since_use not in ("never", "unknown"):
+                reason += f", low usage ({env['usage_count']})"
+
+            # Format size
+            size_bytes = env["size_bytes"]
+            if size_bytes < 1024 * 1024:
+                env_size_str = f"{size_bytes / 1024:.0f}KB"
+            elif size_bytes < 1024 * 1024 * 1024:
+                env_size_str = f"{size_bytes / (1024 * 1024):.0f}MB"
+            else:
+                env_size_str = f"{size_bytes / (1024 * 1024 * 1024):.1f}GB"
+
+            cleanup_table.add_row(
+                env["name"],
+                last_used_str,
+                str(env["usage_count"]),
+                env_size_str,
+                reason,
+            )
+
+        console.print(cleanup_table)
+        console.print(f"\n[cyan]Total space to be freed: {size_str}[/cyan]")
+
+        if dry_run:
+            console.print(
+                "\n[blue]💡 This was a dry run. Use without --dry-run to actually remove environments.[/blue]"
+            )
+            return
+
+        # Confirm removal
+        removed_count = 0
+        skipped_count = 0
+
+        if interactive:
+            console.print(
+                f"\n[yellow]Interactive mode - you'll be asked about each environment:[/yellow]"
+            )
+            for env in unused_envs:
+                confirm = typer.confirm(f"Remove '{env['name']}'?")
+                if confirm:
+                    try:
+                        env_manager.remove(env["name"])
+                        console.print(f"[green]✓[/green] Removed '{env['name']}'")
+                        removed_count += 1
+                    except Exception as e:
+                        console.print(
+                            f"[red]✗[/red] Failed to remove '{env['name']}': {e}"
+                        )
+                else:
+                    console.print(f"[yellow]Skipped '{env['name']}'[/yellow]")
+                    skipped_count += 1
+        else:
+            if not force:
+                env_names = [env["name"] for env in unused_envs]
+                confirm = typer.confirm(
+                    f"Remove all {len(unused_envs)} environments? This will free {size_str}"
+                )
+                if not confirm:
+                    console.print("[yellow]Operation cancelled[/yellow]")
+                    return
+
+            # Remove all environments
+            for env in unused_envs:
+                try:
+                    env_manager.remove(env["name"])
+                    console.print(f"[green]✓[/green] Removed '{env['name']}'")
+                    removed_count += 1
+                except Exception as e:
+                    console.print(f"[red]✗[/red] Failed to remove '{env['name']}': {e}")
+
+        # Summary
+        if removed_count > 0:
+            actual_freed = sum(env["size_bytes"] for env in unused_envs[:removed_count])
+            if actual_freed < 1024 * 1024:
+                freed_str = f"{actual_freed / 1024:.1f} KB"
+            elif actual_freed < 1024 * 1024 * 1024:
+                freed_str = f"{actual_freed / (1024 * 1024):.1f} MB"
+            else:
+                freed_str = f"{actual_freed / (1024 * 1024 * 1024):.1f} GB"
+
+            console.print(
+                f"\n[green]✅ Cleaned up {removed_count} environment(s), freed {freed_str}[/green]"
+            )
+
+        if skipped_count > 0:
+            console.print(f"[yellow]Skipped {skipped_count} environment(s)[/yellow]")
+
+    except Exception as e:
+        console.print(f"[red]✗[/red] Failed to cleanup environments: {e}")
+        raise typer.Exit(1) from None
+
+
+@app.command()
+def edit(
+    name: str = typer.Argument(
+        ...,
+        help="Name of the virtual environment",
+        autocompletion=complete_environment_names,
+    ),
+    description: str = typer.Option(
+        None, "--description", "-d", help="Set environment description"
+    ),
+    add_tag: str = typer.Option(None, "--add-tag", help="Add a tag to the environment"),
+    remove_tag: str = typer.Option(
+        None, "--remove-tag", help="Remove a tag from the environment"
+    ),
+    project_root: str = typer.Option(
+        None, "--project-root", help="Set project root directory"
+    ),
+) -> None:
+    """Edit environment metadata."""
+    try:
+        if not any([description is not None, add_tag, remove_tag, project_root]):
+            console.print(
+                "[yellow]No changes specified. Use --help to see available options.[/yellow]"
+            )
+            return
+
+        # Get current metadata
+        metadata = env_manager.get_metadata(name)
+
+        # Update description
+        if description is not None:
+            env_manager.update_metadata_field(name, "description", description)
+            console.print(f"[green]✓[/green] Updated description for '{name}'")
+
+        # Add tag
+        if add_tag:
+            current_tags = metadata.get("tags", [])
+            if add_tag not in current_tags:
+                current_tags.append(add_tag)
+                env_manager.update_metadata_field(name, "tags", current_tags)
+                console.print(f"[green]✓[/green] Added tag '{add_tag}' to '{name}'")
+            else:
+                console.print(
+                    f"[yellow]Tag '{add_tag}' already exists on '{name}'[/yellow]"
+                )
+
+        # Remove tag
+        if remove_tag:
+            current_tags = metadata.get("tags", [])
+            if remove_tag in current_tags:
+                current_tags.remove(remove_tag)
+                env_manager.update_metadata_field(name, "tags", current_tags)
+                console.print(
+                    f"[green]✓[/green] Removed tag '{remove_tag}' from '{name}'"
+                )
+            else:
+                console.print(
+                    f"[yellow]Tag '{remove_tag}' not found on '{name}'[/yellow]"
+                )
+
+        # Update project root
+        if project_root:
+            import os
+
+            project_root_path = os.path.abspath(os.path.expanduser(project_root))
+            env_manager.update_metadata_field(name, "project_root", project_root_path)
+            console.print(
+                f"[green]✓[/green] Set project root for '{name}' to '{project_root_path}'"
+            )
+
+    except Exception as e:
+        console.print(f"[red]✗[/red] Failed to edit metadata for '{name}': {e}")
         raise typer.Exit(1) from None
 
 
