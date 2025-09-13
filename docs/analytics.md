@@ -1,10 +1,10 @@
 # Rich Metadata and Usage Analytics
 
-This document describes the enhanced metadata system and usage analytics features added to uvenv.
+This document describes the enhanced metadata system and usage analytics features added to uvve.
 
 ## Overview
 
-uvenv now includes a comprehensive metadata system that tracks environment usage patterns, descriptions, tags, and other information. This enables powerful analytics and cleanup automation features.
+uvve now includes a comprehensive metadata system that tracks environment usage patterns, descriptions, tags, and other information. This enables powerful analytics and cleanup automation features.
 
 ## Rich Metadata Features
 
@@ -14,10 +14,10 @@ When creating environments, you can now provide rich metadata directly:
 
 ```bash
 # Create with description and tags
-uvenv create myapi 3.11 --description "Customer API service" --add-tag production --add-tag api
+uvve create myapi 3.11 --description "Customer API service" --add-tag production --add-tag api
 
 # Interactive mode when no metadata provided
-uvenv create webapp 3.11
+uvve create webapp 3.11
 # Prompts for:
 # Description (optional, press Enter to skip): My web application
 # Add tags (optional):
@@ -35,7 +35,7 @@ uvenv create webapp 3.11
 
 ### Enhanced Metadata Schema
 
-Each environment now stores rich metadata in `uvenv.meta.json`:
+Each environment now stores rich metadata in `uvve.meta.json`:
 
 ```json
 {
@@ -67,7 +67,7 @@ Each environment now stores rich metadata in `uvenv.meta.json`:
 
 ## Usage Analytics Commands
 
-### `uvenv analytics [name]`
+### `uvve analytics [name]`
 
 Show analytics for a specific environment or summary for all environments.
 
@@ -75,22 +75,22 @@ Show analytics for a specific environment or summary for all environments.
 
 ```bash
 # Show analytics for specific environment
-uvenv analytics myproject
+uvve analytics myproject
 
 # Show summary for all environments
-uvenv analytics
+uvve analytics
 ```
 
 **Options:**
 
 - `--detailed`, `-d`: Show detailed analytics (future feature)
 
-### `uvenv status`
+### `uvve status`
 
 Show environment health overview with quick insights.
 
 ```bash
-uvenv status
+uvve status
 ```
 
 This displays:
@@ -99,25 +99,25 @@ This displays:
 - Usage patterns and recommendations
 - Summary of environments needing cleanup
 
-### `uvenv cleanup`
+### `uvve cleanup`
 
 Clean up unused environments automatically.
 
 ```bash
 # Preview what would be removed
-uvenv cleanup --dry-run
+uvve cleanup --dry-run
 
 # Remove environments unused for 60+ days
-uvenv cleanup --unused-for 60
+uvve cleanup --unused-for 60
 
 # Include low-usage environments (≤5 uses)
-uvenv cleanup --low-usage
+uvve cleanup --low-usage
 
 # Interactive cleanup (ask for each environment)
-uvenv cleanup --interactive
+uvve cleanup --interactive
 
 # Force removal without confirmation
-uvenv cleanup --force
+uvve cleanup --force
 ```
 
 **Options:**
@@ -128,23 +128,23 @@ uvenv cleanup --force
 - `--interactive`, `-i`: Ask before removing each environment
 - `--force`, `-f`: Remove without confirmation
 
-### `uvenv edit <name>`
+### `uvve edit <name>`
 
 Edit environment metadata.
 
 ```bash
 # Set description
-uvenv edit myproject --description "My web API project"
+uvve edit myproject --description "My web API project"
 
 # Add tags
-uvenv edit myproject --add-tag "production"
-uvenv edit myproject --add-tag "api"
+uvve edit myproject --add-tag "production"
+uvve edit myproject --add-tag "api"
 
 # Remove tags
-uvenv edit myproject --remove-tag "development"
+uvve edit myproject --remove-tag "development"
 
 # Set project root
-uvenv edit myproject --project-root ~/projects/web-api
+uvve edit myproject --project-root ~/projects/web-api
 ```
 
 **Options:**
@@ -154,21 +154,21 @@ uvenv edit myproject --project-root ~/projects/web-api
 - `--remove-tag`: Remove a tag from the environment
 - `--project-root`: Set project root directory
 
-### Enhanced `uvenv list`
+### Enhanced `uvve list`
 
 The list command now supports usage information and sorting.
 
 ```bash
 # Show basic list
-uvenv list
+uvve list
 
 # Show with usage statistics
-uvenv list --usage
+uvve list --usage
 
 # Sort by different criteria
-uvenv list --usage --sort-by usage     # Most used first
-uvenv list --usage --sort-by size      # Largest first
-uvenv list --usage --sort-by last_used # Most recently used first
+uvve list --usage --sort-by usage     # Most used first
+uvve list --usage --sort-by size      # Largest first
+uvve list --usage --sort-by last_used # Most recently used first
 ```
 
 **Options:**
@@ -182,7 +182,7 @@ Usage statistics are automatically updated when you activate environments:
 
 ```bash
 # This automatically updates last_used and increments usage_count
-uvenv activate myproject
+uvve activate myproject
 ```
 
 The system tracks:
@@ -225,27 +225,27 @@ The system identifies environments for potential cleanup:
 
 ```bash
 # Create and set up environment
-uvenv create myproject 3.11
-uvenv edit myproject --description "Customer API service"
-uvenv edit myproject --add-tag "api" --add-tag "production"
-uvenv edit myproject --project-root ~/projects/customer-api
+uvve create myproject 3.11
+uvve edit myproject --description "Customer API service"
+uvve edit myproject --add-tag "api" --add-tag "production"
+uvve edit myproject --project-root ~/projects/customer-api
 
 # Use environment (automatically tracked)
-uvenv activate myproject
+uvve activate myproject
 
 # Review analytics
-uvenv analytics myproject
-uvenv status
+uvve analytics myproject
+uvve status
 
 # Periodic cleanup
-uvenv cleanup --dry-run
-uvenv cleanup --unused-for 60 --interactive
+uvve cleanup --dry-run
+uvve cleanup --unused-for 60 --interactive
 ```
 
 ### Analytics Output Example
 
 ```bash
-$ uvenv analytics myproject
+$ uvve analytics myproject
 
 Analytics for 'myproject'
 
@@ -273,7 +273,7 @@ Analytics for 'myproject'
 ### Status Output Example
 
 ```bash
-$ uvenv status
+$ uvve status
 
 Environment Health Overview
 
@@ -285,7 +285,7 @@ Environment Health Overview
 │ old-test    │ Never       │ 0           │ 80MB   │ 🔴 Never used       │
 └─────────────┴─────────────┴─────────────┴────────┴─────────────────────┘
 
-💡 Found 2 unused environment(s). Consider running `uvenv cleanup --dry-run` to review.
+💡 Found 2 unused environment(s). Consider running `uvve cleanup --dry-run` to review.
 ```
 
 ## Best Practices
@@ -294,16 +294,16 @@ Environment Health Overview
 
 ```bash
 # Production environments
-uvenv create prod-api 3.11 -d "Production API server" -t production -t api -t critical
+uvve create prod-api 3.11 -d "Production API server" -t production -t api -t critical
 
 # Development environments
-uvenv create dev-webapp 3.11 -d "Development web app" -t development -t web
+uvve create dev-webapp 3.11 -d "Development web app" -t development -t web
 
 # Experimental environments
-uvenv create ml-experiment 3.11 -d "Testing new ML model" -t experiment -t ml
+uvve create ml-experiment 3.11 -d "Testing new ML model" -t experiment -t ml
 
 # Quick environments (interactive mode)
-uvenv create temp-env 3.11
+uvve create temp-env 3.11
 # Just press Enter to skip description and tags for temporary work
 ```
 
@@ -320,20 +320,20 @@ Common tagging strategies:
 
 ```bash
 # Create project environment with metadata
-uvenv create customer-api 3.11 \
+uvve create customer-api 3.11 \
   --description "Customer management API service" \
   --add-tag production \
   --add-tag api \
   --add-tag django
 
 # Check environment status periodically
-uvenv analytics customer-api
+uvve analytics customer-api
 
 # Review all environments monthly
-uvenv status
+uvve status
 
 # Clean up unused environments quarterly
-uvenv cleanup --older-than 90 --interactive
+uvve cleanup --older-than 90 --interactive
 ```
 
 ## Configuration

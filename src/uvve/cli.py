@@ -1,4 +1,4 @@
-"""CLI entrypoint for uvenv using Typer."""
+"""CLI entrypoint for uvve using Typer."""
 
 from __future__ import annotations
 
@@ -7,12 +7,12 @@ from datetime import datetime
 from rich.console import Console
 from rich.table import Table
 
-from uvenv import __version__
-from uvenv.core.analytics import AnalyticsManager
-from uvenv.core.freeze import FreezeManager
-from uvenv.core.manager import EnvironmentManager
-from uvenv.core.python import PythonManager
-from uvenv.shell.activate import ActivationManager
+from uvve import __version__
+from uvve.core.analytics import AnalyticsManager
+from uvve.core.freeze import FreezeManager
+from uvve.core.manager import EnvironmentManager
+from uvve.core.python import PythonManager
+from uvve.shell.activate import ActivationManager
 
 console = Console()
 
@@ -20,12 +20,12 @@ console = Console()
 def version_callback(value: bool) -> None:
     """Handle version option."""
     if value:
-        console.print(f"uvenv version {__version__}")
+        console.print(f"uvve version {__version__}")
         raise typer.Exit()
 
 
 app = typer.Typer(
-    name="uvenv",
+    name="uvve",
     help="A CLI tool for managing Python virtual environments using uv",
     rich_markup_mode="rich",
 )
@@ -439,9 +439,9 @@ def shell_integration(
         help="Print integration script instead of installation instructions",
     ),
 ) -> None:
-    """Install shell integration for uvenv.
+    """Install shell integration for uvve.
 
-    This enables 'uvenv activate <env>' to work directly without eval.
+    This enables 'uvve activate <env>' to work directly without eval.
     """
     try:
         integration_script = activation_manager.generate_shell_integration(shell)
@@ -469,9 +469,9 @@ def shell_integration(
         console.print(f"\n{integration_script}")
 
         console.print("\n[green]After adding this and restarting your shell:[/green]")
-        console.print("• [cyan]uvenv activate myenv[/cyan] - Will activate directly")
-        console.print("• [cyan]uvenv list[/cyan] - Works normally")
-        console.print("• [cyan]uvenv python install 3.12[/cyan] - Works normally")
+        console.print("• [cyan]uvve activate myenv[/cyan] - Will activate directly")
+        console.print("• [cyan]uvve list[/cyan] - Works normally")
+        console.print("• [cyan]uvve python install 3.12[/cyan] - Works normally")
 
     except Exception as e:
         console.print(f"[red]✗[/red] Failed to generate shell integration: {e}")
@@ -698,7 +698,7 @@ def status() -> None:
         # Summary message
         if unused > 0:
             console.print(
-                f"\n[yellow]💡 Found {unused} unused environment(s). Consider running `uvenv cleanup --dry-run` to review.[/yellow]"
+                f"\n[yellow]💡 Found {unused} unused environment(s). Consider running `uvve cleanup --dry-run` to review.[/yellow]"
             )
         else:
             console.print(

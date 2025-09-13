@@ -1,6 +1,6 @@
 # Design Principles
 
-This document outlines the core design principles that guide the development of `uvenv`.
+This document outlines the core design principles that guide the development of `uvve`.
 
 ## 🎯 Core Principles
 
@@ -15,7 +15,7 @@ This document outlines the core design principles that guide the development of 
 - ✅ Python version pinning in lockfiles
 - ✅ Timestamp tracking for reproducibility auditing
 
-**Verification**: `uvenv thaw` with the same lockfile produces identical environments across machines.
+**Verification**: `uvve thaw` with the same lockfile produces identical environments across machines.
 
 ### 2. Portable
 
@@ -36,12 +36,12 @@ This document outlines the core design principles that guide the development of 
 
 **Implementation**:
 
-- ✅ `uvenv.version` metadata in lockfiles enables format evolution
+- ✅ `uvve.version` metadata in lockfiles enables format evolution
 - ✅ Structured TOML format allows adding new sections
 - ✅ Graceful handling of unknown lockfile versions
 - ✅ Backwards compatibility for metadata formats
 
-**Verification**: Newer uvenv versions can read and upgrade older lockfile formats.
+**Verification**: Newer uvve versions can read and upgrade older lockfile formats.
 
 ### 4. Extensible
 
@@ -63,14 +63,14 @@ This document outlines the core design principles that guide the development of 
 
 ## 🔄 Workflow Principles
 
-### Lock Workflow (`uvenv lock`)
+### Lock Workflow (`uvve lock`)
 
 **Process**:
 
 1. **Capture Python Version**: Use `uv python list --json` or equivalent
 2. **Extract Dependencies**: Run `uv pip freeze` in the environment
-3. **Collect Metadata**: Timestamp, uvenv version, platform info
-4. **Write Lockfile**: Store in `~/.uvenv/<name>/uvenv.lock`
+3. **Collect Metadata**: Timestamp, uvve version, platform info
+4. **Write Lockfile**: Store in `~/.uvve/<name>/uvve.lock`
 
 **Guarantees**:
 
@@ -78,7 +78,7 @@ This document outlines the core design principles that guide the development of 
 - ✅ Reproducible dependency resolution
 - ✅ Platform compatibility tracking
 
-### Thaw Workflow (`uvenv thaw`)
+### Thaw Workflow (`uvve thaw`)
 
 **Process**:
 
@@ -94,7 +94,7 @@ This document outlines the core design principles that guide the development of 
 - ✅ Dependency integrity
 - ✅ Platform compatibility warnings
 
-### Sync Workflow (`uvenv sync` - Future)
+### Sync Workflow (`uvve sync` - Future)
 
 **Process**:
 
@@ -193,12 +193,12 @@ This document outlines the core design principles that guide the development of 
 
 - Advanced shell completions
 - Environment templates
-- Global hooks (.uvenv-version files)
+- Global hooks (.uvve-version files)
 - Brew formula distribution
 
 ### Phase 3: Ecosystem Integration
 
-- Project linking (`uvenv link`)
+- Project linking (`uvve link`)
 - CI/CD integrations
 - IDE plugins
 - Community contributions

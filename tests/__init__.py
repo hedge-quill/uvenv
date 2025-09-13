@@ -1,1 +1,1 @@
-"""Test package for uvenv."""
+"""Test package for uvve."""

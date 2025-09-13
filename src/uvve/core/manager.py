@@ -1,4 +1,4 @@
-"""Environment management for uvenv."""
+"""Environment management for uvve."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import subprocess
 from datetime import datetime
 from typing import Any
 
-from uvenv.core.paths import PathManager
+from uvve.core.paths import PathManager
 
 
 class EnvironmentManager:

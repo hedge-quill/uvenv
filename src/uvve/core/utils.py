@@ -1,4 +1,4 @@
-"""Utility functions for uvenv."""
+"""Utility functions for uvve."""
 
 import os
 import shutil

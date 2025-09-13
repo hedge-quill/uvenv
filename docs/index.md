@@ -1,4 +1,4 @@
-# uvenv Documentation
+# uvve Documentation
 
 ## 📚 Documentation Navigation
 
@@ -10,7 +10,7 @@
 
 ## Overview
 
-`uvenv` is a CLI tool for managing Python virtual environments using [uv](https://github.com/astral-sh/uv). It provides a simple interface similar to `pyenv-virtualenv` but leverages the speed and efficiency of `uv`.
+`uvve` is a CLI tool for managing Python virtual environments using [uv](https://github.com/astral-sh/uv). It provides a simple interface similar to `pyenv-virtualenv` but leverages the speed and efficiency of `uv`.
 
 ## Installation
 
@@ -19,10 +19,10 @@
 - Python 3.10+
 - [uv](https://github.com/astral-sh/uv) installed and available in PATH
 
-### Install uvenv
+### Install uvve
 
 ```bash
-pip install uvenv
+pip install uvve
 ```
 
 ## Quick Start
@@ -31,8 +31,8 @@ pip install uvenv
 
 ```bash
 # Install shell integration for direct activation
-uvenv shell-integration >> ~/.zshrc  # for zsh
-uvenv shell-integration >> ~/.bashrc # for bash
+uvve shell-integration >> ~/.zshrc  # for zsh
+uvve shell-integration >> ~/.bashrc # for bash
 
 # Restart your shell or source the config
 source ~/.zshrc
@@ -41,19 +41,19 @@ source ~/.zshrc
 ### 2. Install a Python version
 
 ```bash
-uvenv python install 3.11
+uvve python install 3.11
 ```
 
 ### 3. List available Python versions
 
 ```bash
-uvenv python list
+uvve python list
 ```
 
 ### 4. Create a virtual environment
 
 ```bash
-uvenv create myproject 3.11
+uvve create myproject 3.11
 ```
 
 ### 5. Activate the environment
@@ -61,38 +61,38 @@ uvenv create myproject 3.11
 **With shell integration (recommended):**
 
 ```bash
-uvenv activate myproject
+uvve activate myproject
 ```
 
 **Without shell integration:**
 
 ```bash
-eval "$(uvenv activate myproject)"
+eval "$(uvve activate myproject)"
 ```
 
 ### 6. List environments
 
 ```bash
-uvenv list
+uvve list
 ```
 
 ### 7. Create a lockfile
 
 ```bash
-uvenv lock myproject
+uvve lock myproject
 ```
 
 ### 8. Remove an environment
 
 ```bash
-uvenv remove myproject
+uvve remove myproject
 ```
 
 ## Commands
 
 ### Python Version Management
 
-#### `uvenv python install <version>`
+#### `uvve python install <version>`
 
 Install a Python version using uv.
 
@@ -103,17 +103,17 @@ Install a Python version using uv.
 **Example:**
 
 ```bash
-uvenv python install 3.11.0
+uvve python install 3.11.0
 ```
 
-#### `uvenv python list`
+#### `uvve python list`
 
 List available and installed Python versions.
 
 **Example:**
 
 ```bash
-uvenv python list
+uvve python list
 ```
 
 **Output:**
@@ -122,19 +122,19 @@ uvenv python list
 - ✓ Installed versions are marked with a checkmark
 - Available versions show as "Available"
 
-#### `uvenv python --help`
+#### `uvve python --help`
 
 Show help for Python version management commands.
 
 **Example:**
 
 ```bash
-uvenv python --help
+uvve python --help
 ```
 
 ### Environment Management
 
-#### `uvenv create <name> <python_version>`
+#### `uvve create <name> <python_version>`
 
 Create a new virtual environment.
 
@@ -146,10 +146,10 @@ Create a new virtual environment.
 **Example:**
 
 ```bash
-uvenv create myproject 3.11
+uvve create myproject 3.11
 ```
 
-#### `uvenv activate <name>`
+#### `uvve activate <name>`
 
 Print shell activation snippet for the environment.
 
@@ -159,12 +159,12 @@ Print shell activation snippet for the environment.
 
 **How it works:**
 
-The `uvenv activate` command doesn't directly activate the environment. Instead, it outputs the shell command needed to activate it. You have two options:
+The `uvve activate` command doesn't directly activate the environment. Instead, it outputs the shell command needed to activate it. You have two options:
 
 **Option 1: Use with `eval` (Recommended)**
 
 ```bash
-eval "$(uvenv activate myproject)"
+eval "$(uvve activate myproject)"
 ```
 
 This executes the activation command immediately and activates the environment in your current shell.
@@ -173,11 +173,11 @@ This executes the activation command immediately and activates the environment i
 
 ```bash
 # First, see what command to run:
-uvenv activate myproject
-# Output: source /Users/username/.uvenv/myproject/bin/activate
+uvve activate myproject
+# Output: source /Users/username/.uvve/myproject/bin/activate
 
 # Then manually execute the output:
-source /Users/username/.uvenv/myproject/bin/activate
+source /Users/username/.uvve/myproject/bin/activate
 ```
 
 **Why use `eval`?**
@@ -191,26 +191,26 @@ source /Users/username/.uvenv/myproject/bin/activate
 
 ```bash
 # Without eval - just shows the command:
-$ uvenv activate myproject
-source /Users/mgale/.uvenv/myproject/bin/activate
+$ uvve activate myproject
+source /Users/mgale/.uvve/myproject/bin/activate
 
 # With eval - actually activates:
-$ eval "$(uvenv activate myproject)"
+$ eval "$(uvve activate myproject)"
 (myproject) $ echo $VIRTUAL_ENV
-/Users/mgale/.uvenv/myproject
+/Users/mgale/.uvve/myproject
 ```
 
-#### `uvenv list`
+#### `uvve list`
 
 List all virtual environments.
 
 **Example:**
 
 ```bash
-uvenv list
+uvve list
 ```
 
-#### `uvenv remove <name>`
+#### `uvve remove <name>`
 
 Remove a virtual environment.
 
@@ -225,13 +225,13 @@ Remove a virtual environment.
 **Example:**
 
 ```bash
-uvenv remove myproject
-uvenv remove myproject --force
+uvve remove myproject
+uvve remove myproject --force
 ```
 
 ### Lockfile Management
 
-#### `uvenv lock <name>`
+#### `uvve lock <name>`
 
 Generate a lockfile for the environment.
 
@@ -242,17 +242,17 @@ Generate a lockfile for the environment.
 **Example:**
 
 ```bash
-uvenv lock myproject
+uvve lock myproject
 ```
 
-This creates a `uvenv.lock` file in the environment directory containing:
+This creates a `uvve.lock` file in the environment directory containing:
 
 - Environment name and Python version
 - List of installed packages with exact versions
 - Platform information
 - Generation timestamp
 
-#### `uvenv thaw <name>`
+#### `uvve thaw <name>`
 
 Rebuild environment from lockfile.
 
@@ -263,16 +263,16 @@ Rebuild environment from lockfile.
 **Example:**
 
 ```bash
-uvenv thaw myproject
+uvve thaw myproject
 ```
 
 ### Shell Integration
 
-#### `uvenv shell-integration`
+#### `uvve shell-integration`
 
-Generate and install shell integration for uvenv.
+Generate and install shell integration for uvve.
 
-This creates a shell function that wraps the `uvenv` command to handle activation automatically without requiring `eval`.
+This creates a shell function that wraps the `uvve` command to handle activation automatically without requiring `eval`.
 
 **Options:**
 
@@ -283,21 +283,21 @@ This creates a shell function that wraps the `uvenv` command to handle activatio
 
 ```bash
 # Show installation instructions for your shell
-uvenv shell-integration
+uvve shell-integration
 
 # Install directly to your shell config
-uvenv shell-integration --print >> ~/.zshrc
+uvve shell-integration --print >> ~/.zshrc
 
 # Generate for a specific shell
-uvenv shell-integration --shell bash
+uvve shell-integration --shell bash
 
 # Just print the script
-uvenv shell-integration --print
+uvve shell-integration --print
 ```
 
 **After installation:**
 
-- `uvenv activate myenv` - Works directly without eval
+- `uvve activate myenv` - Works directly without eval
 - All other commands work normally
 - Requires restarting your shell or sourcing the config
 
@@ -307,66 +307,66 @@ uvenv shell-integration --print
 
 ```bash
 # Check what Python versions are available
-uvenv python list
+uvve python list
 
 # Install a specific Python version
-uvenv python install 3.12.1
+uvve python install 3.12.1
 
 # Install multiple versions for different projects
-uvenv python install 3.11.7
-uvenv python install 3.10.13
+uvve python install 3.11.7
+uvve python install 3.10.13
 
 # List all versions again to see installed ones
-uvenv python list
+uvve python list
 ```
 
 ### Complete Project Setup Workflow
 
 ```bash
 # 0. Optional: Install shell integration (one-time setup)
-uvenv shell-integration >> ~/.zshrc && source ~/.zshrc
+uvve shell-integration >> ~/.zshrc && source ~/.zshrc
 
 # 1. Install the Python version you need
-uvenv python install 3.12.1
+uvve python install 3.12.1
 
 # 2. Create a virtual environment for your project
-uvenv create myproject 3.12.1
+uvve create myproject 3.12.1
 
 # 3. Activate the environment
 # With shell integration:
-uvenv activate myproject
+uvve activate myproject
 # Without shell integration:
-# eval "$(uvenv activate myproject)"
+# eval "$(uvve activate myproject)"
 
 # 4. Install packages in your activated environment
 pip install requests fastapi
 
 # 5. Create a lockfile to save the exact environment state
-uvenv lock myproject
+uvve lock myproject
 
 # 6. Later, recreate the environment from the lockfile
-uvenv thaw myproject
+uvve thaw myproject
 ```
 
 ### Managing Multiple Projects
 
 ```bash
 # Set up environments for different projects
-uvenv python install 3.11.7
-uvenv python install 3.12.1
+uvve python install 3.11.7
+uvve python install 3.12.1
 
-uvenv create api-project 3.12.1
-uvenv create legacy-project 3.11.7
+uvve create api-project 3.12.1
+uvve create legacy-project 3.11.7
 
 # See all your environments
-uvenv list
+uvve list
 
 # Switch between projects
 # With shell integration:
-uvenv activate api-project
+uvve activate api-project
 # ... work on api project
 
-uvenv activate legacy-project
+uvve activate legacy-project
 # ... work on legacy project
 ```
 
@@ -374,28 +374,28 @@ uvenv activate legacy-project
 
 ### Environment Storage
 
-By default, virtual environments are stored in `~/.uvenv/`. Each environment is stored in its own directory:
+By default, virtual environments are stored in `~/.uvve/`. Each environment is stored in its own directory:
 
 ```
-~/.uvenv/
+~/.uvve/
 ├── myproject/
 │   ├── bin/activate           # Activation script
 │   ├── lib/python3.11/        # Python packages
-│   ├── uvenv.lock            # Lockfile
-│   └── uvenv.meta.json       # Metadata
+│   ├── uvve.lock            # Lockfile
+│   └── uvve.meta.json       # Metadata
 └── another-env/
     ├── bin/activate
     ├── lib/python3.10/
-    ├── uvenv.lock
-    └── uvenv.meta.json
+    ├── uvve.lock
+    └── uvve.meta.json
 ```
 
 ### Lockfile Format
 
-The `uvenv.lock` file is in TOML format:
+The `uvve.lock` file is in TOML format:
 
 ```toml
-[uvenv]
+[uvve]
 version = "0.1.0"
 generated = "2023-12-01T12:00:00"
 
@@ -425,13 +425,13 @@ python_implementation = "CPython"
 Add to your `.bashrc` or `.zshrc`:
 
 ```bash
-# Function to activate uvenv environments
+# Function to activate uvve environments
 uvactivate() {
     if [ -z "$1" ]; then
         echo "Usage: uvactivate <environment_name>"
         return 1
     fi
-    eval "$(uvenv activate "$1")"
+    eval "$(uvve activate "$1")"
 }
 ```
 
@@ -440,13 +440,13 @@ uvactivate() {
 Add to your Fish config:
 
 ```fish
-# Function to activate uvenv environments
+# Function to activate uvve environments
 function uvactivate
     if test (count $argv) -eq 0
         echo "Usage: uvactivate <environment_name>"
         return 1
     end
-    eval (uvenv activate $argv[1])
+    eval (uvve activate $argv[1])
 end
 ```
 
@@ -463,8 +463,8 @@ end
 
 ```bash
 # Clone the repository
-git clone https://github.com/mgale694/uvenv.git
-cd uvenv
+git clone https://github.com/mgale694/uvve.git
+cd uvve
 
 # Install in development mode with dev dependencies
 pip install -e ".[dev]"
@@ -475,7 +475,7 @@ pre-commit install
 
 ### Code Quality
 
-uvenv uses modern Python tooling for code quality:
+uvve uses modern Python tooling for code quality:
 
 ```bash
 # Format code
@@ -517,17 +517,17 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 **Permission errors:**
 
 ```bash
-# Ensure ~/.uvenv is writable
-chmod 755 ~/.uvenv
+# Ensure ~/.uvve is writable
+chmod 755 ~/.uvve
 ```
 
 **Environment not activating:**
 
 ```bash
 # Check if environment exists
-uvenv list
+uvve list
 
 # Recreate if necessary
-uvenv remove myproject
-uvenv create myproject 3.11
+uvve remove myproject
+uvve create myproject 3.11
 ```

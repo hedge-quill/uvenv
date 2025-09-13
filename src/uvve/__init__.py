@@ -1,4 +1,4 @@
-"""uvenv: A CLI tool for managing Python virtual environments using uv."""
+"""uvve: A CLI tool for managing Python virtual environments using uv."""
 
 __version__ = "0.2.0"
 __author__ = "Your Name"

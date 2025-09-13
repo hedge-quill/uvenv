@@ -1,10 +1,10 @@
-"""Analytics and usage tracking for uvenv environments."""
+"""Analytics and usage tracking for uvve environments."""
 
 from datetime import datetime
 from typing import Any
 
-from uvenv.core.manager import EnvironmentManager
-from uvenv.core.paths import PathManager
+from uvve.core.manager import EnvironmentManager
+from uvve.core.paths import PathManager
 
 
 class AnalyticsManager:

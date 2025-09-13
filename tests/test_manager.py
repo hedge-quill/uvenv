@@ -1,11 +1,11 @@
-"""Tests for uvenv manager module."""
+"""Tests for uvve manager module."""
 
 import json
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from uvenv.core.manager import EnvironmentManager
+from uvve.core.manager import EnvironmentManager
 
 
 class TestEnvironmentManager:
@@ -31,7 +31,7 @@ class TestEnvironmentManager:
         environments = self.manager.list()
         assert environments == []
 
-    @patch("uvenv.core.manager.subprocess.run")
+    @patch("uvve.core.manager.subprocess.run")
     def test_create_environment_success(self, mock_run):
         """Test successful environment creation."""
         mock_run.return_value = Mock(stderr="", returncode=0)
