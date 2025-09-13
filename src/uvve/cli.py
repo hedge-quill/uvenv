@@ -9,6 +9,7 @@ from rich.table import Table
 
 from uvve import __version__
 from uvve.core.analytics import AnalyticsManager
+from uvve.core.azure import AzureManager
 from uvve.core.freeze import FreezeManager
 from uvve.core.manager import EnvironmentManager
 from uvve.core.python import PythonManager
@@ -945,6 +946,161 @@ def edit(
 
     except Exception as e:
         console.print(f"[red]✗[/red] Failed to edit metadata for '{name}': {e}")
+        raise typer.Exit(1) from None
+
+
+@app.command()
+def setup_azure(
+    feed_url: str = typer.Option(
+        None,
+        "--feed-url",
+        "-u",
+        help="Azure DevOps artifact feed URL",
+    ),
+    feed_name: str = typer.Option(
+        "private-registry",
+        "--feed-name",
+        "-n",
+        help="Name for the feed in configuration",
+    ),
+    env_name: str = typer.Option(
+        None,
+        "--env",
+        "-e",
+        help="Environment name to install keyring packages into",
+    ),
+) -> None:
+    """Set up Azure DevOps package feed authentication for uv."""
+    try:
+        azure_manager = AzureManager()
+
+        # Interactive prompt if no URL provided
+        if not feed_url:
+            console.print(
+                "[cyan]Setting up Azure DevOps package feed authentication[/cyan]"
+            )
+            console.print("Please provide your Azure DevOps artifact feed URL.")
+            console.print(
+                "Example: https://pkgs.dev.azure.com/myorg/_packaging/myfeed/pypi/simple/"
+            )
+            feed_url = typer.prompt("Feed URL")
+
+        # Interactive prompt for environment if not provided
+        if not env_name:
+            # Try to detect current active uvve environment
+            current_env = env_manager.get_current_environment()
+            if current_env:
+                env_name = current_env
+                console.print(f"[green]Detected active environment: {env_name}[/green]")
+            else:
+                # No active environment, check available environments
+                envs = env_manager.list()
+
+                if envs:
+                    console.print(
+                        f"\n[cyan]No active uvve environment detected. Available environments:[/cyan]"
+                    )
+                    for env in envs:
+                        console.print(f"  • {env['name']}")
+                    env_name = typer.prompt(
+                        "Environment name to install keyring packages into (or press Enter to skip)",
+                        default="",
+                    )
+                    if not env_name.strip():
+                        env_name = None
+                else:
+                    console.print(
+                        "\n[yellow]No environments found. Keyring packages will be installed globally.[/yellow]"
+                    )
+
+        # Show installation progress
+        if env_name:
+            console.print(
+                f"\n[yellow]Installing keyring packages into environment '{env_name}'...[/yellow]"
+            )
+        else:
+            console.print("\n[yellow]Installing keyring packages globally...[/yellow]")
+
+        # Set up the feed
+        azure_manager.setup_azure_feed(feed_url, feed_name, env_name)
+
+        # Get status
+        status = azure_manager.get_status()
+
+        console.print(
+            f"\n[green]✅ Azure feed '{feed_name}' configured successfully![/green]"
+        )
+        console.print(f"Feed URL: {feed_url}")
+        console.print(f"Config file: {status['config_file_path']}")
+
+        # Show shell setup instructions
+        console.print("\n[bold cyan]Shell Setup Instructions:[/bold cyan]")
+        console.print("Add these environment variables to your shell:")
+
+        commands = azure_manager.get_shell_setup_commands(feed_name)
+        shell = "bash"  # Default, could detect from env
+        console.print(f"\n[yellow]{commands[shell]}[/yellow]")
+
+        console.print(
+            "\n[dim]💡 Make sure you're authenticated with Azure CLI: `az login`[/dim]"
+        )
+
+    except Exception as e:
+        console.print(f"[red]✗[/red] Failed to set up Azure feed: {e}")
+        raise typer.Exit(1) from None
+
+
+@app.command()
+def azure_status() -> None:
+    """Show Azure DevOps package feed configuration status."""
+    try:
+        azure_manager = AzureManager()
+        status = azure_manager.get_status()
+
+        console.print("[bold cyan]Azure DevOps Configuration Status[/bold cyan]\n")
+
+        # Config file status
+        if status["config_file_exists"]:
+            console.print(
+                f"[green]✅[/green] Config file: {status['config_file_path']}"
+            )
+        else:
+            console.print(
+                f"[yellow]⚠️[/yellow] No config file found at: {status['config_file_path']}"
+            )
+
+        # Keyring provider
+        if status["keyring_provider"]:
+            console.print(
+                f"[green]✅[/green] Keyring provider: {status['keyring_provider']}"
+            )
+        else:
+            console.print("[yellow]⚠️[/yellow] UV_KEYRING_PROVIDER not set")
+
+        # Configured indexes
+        if status["configured_indexes"]:
+            console.print(
+                f"\n[bold]Configured Azure Feeds ({len(status['configured_indexes'])}):[/bold]"
+            )
+            for idx in status["configured_indexes"]:
+                console.print(
+                    f"  • {idx.get('name', 'unnamed')}: {idx.get('url', 'no URL')}"
+                )
+        else:
+            console.print("\n[yellow]No Azure feeds configured[/yellow]")
+
+        # Azure environment variables
+        if status["azure_env_vars"]:
+            console.print(
+                f"\n[bold]Azure Environment Variables ({len(status['azure_env_vars'])}):[/bold]"
+            )
+            for var, value in status["azure_env_vars"].items():
+                console.print(f"  • {var}={value}")
+        else:
+            console.print("\n[yellow]No Azure environment variables set[/yellow]")
+
+    except Exception as e:
+        console.print(f"[red]✗[/red] Failed to get Azure status: {e}")
         raise typer.Exit(1) from None
 
 

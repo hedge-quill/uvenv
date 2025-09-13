@@ -7,6 +7,7 @@ import os
 import shutil
 import subprocess
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from uvve.core.paths import PathManager
@@ -22,6 +23,34 @@ class EnvironmentManager:
             base_dir: Base directory for environments
         """
         self.path_manager = PathManager(base_dir)
+
+    def get_current_environment(self) -> str | None:
+        """Get the name of the currently activated uvve environment.
+
+        Returns:
+            Environment name if a uvve environment is active, None otherwise
+        """
+        virtual_env = os.environ.get("VIRTUAL_ENV")
+        if not virtual_env:
+            return None
+
+        virtual_env_path = Path(virtual_env)
+        base_dir = self.path_manager.base_dir
+
+        # Check if the virtual environment is within our uvve base directory
+        try:
+            relative_path = virtual_env_path.relative_to(base_dir)
+            # The environment name should be the first part of the relative path
+            env_name = relative_path.parts[0]
+
+            # Verify this is actually a uvve environment
+            if self.path_manager.environment_exists(env_name):
+                return env_name
+        except ValueError:
+            # virtual_env_path is not relative to base_dir
+            pass
+
+        return None
 
     def create(
         self,
