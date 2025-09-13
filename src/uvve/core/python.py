@@ -1,4 +1,4 @@
-"""Python version management for uvenv."""
+"""Python version management for uvve."""
 
 import subprocess
 from typing import List, Dict, Any

@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "uvenv"
+name = "uvve"
 version = "0.2.0"
 description = "A CLI tool for managing Python virtual environments using uv"
 readme = "README.md"
@@ -33,22 +33,22 @@ dev = [
 ]
 
 [project.scripts]
-uvenv = "uvenv.cli:app"
+uvve = "uvve.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/mgale694/uvenv"
-Repository = "https://github.com/mgale694/uvenv"
-Issues = "https://github.com/mgale694/uvenv/issues"
+Homepage = "https://github.com/mgale694/uvve"
+Repository = "https://github.com/mgale694/uvve"
+Issues = "https://github.com/mgale694/uvve/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/uvenv"]
+packages = ["src/uvve"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "--cov=uvenv --cov-report=term-missing"
+addopts = "--cov=uvve --cov-report=term-missing"
 
 [tool.black]
 line-length = 88

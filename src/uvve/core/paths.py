@@ -1,4 +1,4 @@
-"""Manages path operations for uvenv."""
+"""Manages path operations for uvve."""
 
 import os
 from pathlib import Path
@@ -6,17 +6,17 @@ from typing import Optional
 
 
 class PathManager:
-    """Manages paths for uvenv virtual environments."""
+    """Manages paths for uvve virtual environments."""
 
     def __init__(self, base_dir: Optional[str] = None) -> None:
         """Initialize the path manager.
 
         Args:
-            base_dir: Base directory for uvenv environments.
-                     Defaults to ~/.uvenv
+            base_dir: Base directory for uvve environments.
+                     Defaults to ~/.uvve
         """
         if base_dir is None:
-            base_dir = os.path.expanduser("~/.uvenv")
+            base_dir = os.path.expanduser("~/.uvve")
         self.base_dir = Path(base_dir)
         self.base_dir.mkdir(parents=True, exist_ok=True)
 
@@ -64,9 +64,9 @@ class PathManager:
             name: Environment name
 
         Returns:
-            Path to the uvenv.lock file
+            Path to the uvve.lock file
         """
-        return self.get_env_path(name) / "uvenv.lock"
+        return self.get_env_path(name) / "uvve.lock"
 
     def get_metadata_path(self, name: str) -> Path:
         """Get the metadata file path for an environment.
@@ -75,9 +75,9 @@ class PathManager:
             name: Environment name
 
         Returns:
-            Path to the uvenv.meta.json file
+            Path to the uvve.meta.json file
         """
-        return self.get_env_path(name) / "uvenv.meta.json"
+        return self.get_env_path(name) / "uvve.meta.json"
 
     def list_environments(self) -> list[str]:
         """List all environment names.

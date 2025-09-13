@@ -1,8 +1,8 @@
-# uvenv Design Document
+# uvve Design Document
 
 ## Overview
 
-`uvenv` is designed as a lightweight wrapper around [uv](https://github.com/astral-sh/uv) for managing Python virtual environments. It provides a simple, pyenv-virtualenv-like interface while leveraging uv's speed and efficiency.
+`uvve` is designed as a lightweight wrapper around [uv](https://github.com/astral-sh/uv) for managing Python virtual environments. It provides a simple, pyenv-virtualenv-like interface while leveraging uv's speed and efficiency.
 
 ## Goals
 
@@ -17,7 +17,7 @@
 ### Core Components
 
 ```
-uvenv/
+uvve/
 ├── cli.py              # CLI entrypoint using Typer
 ├── core/
 │   ├── manager.py      # Environment management
@@ -43,7 +43,7 @@ uvenv/
 
 ### Environment Storage
 
-**Decision**: Store environments in `~/.uvenv/<name>/`
+**Decision**: Store environments in `~/.uvve/<name>/`
 
 **Rationale**:
 
@@ -98,21 +98,21 @@ uvenv/
 ### Environment Directory Layout
 
 ```
-~/.uvenv/<env_name>/
+~/.uvve/<env_name>/
 ├── bin/                    # Python executable and scripts
 │   ├── python              # Python interpreter
 │   ├── pip                 # pip
 │   └── activate            # Activation script
 ├── lib/python3.x/          # Python packages
-├── uvenv.lock              # Lockfile (TOML)
-└── uvenv.meta.json         # Metadata (JSON)
+├── uvve.lock              # Lockfile (TOML)
+└── uvve.meta.json         # Metadata (JSON)
 ```
 
 ### Lockfile Schema
 
 ```toml
-[uvenv]
-version = "0.1.0"           # uvenv version that created this
+[uvve]
+version = "0.1.0"           # uvve version that created this
 generated = "ISO-8601"      # Generation timestamp
 
 [environment]
@@ -150,16 +150,16 @@ python_implementation = "CPython"
 
 ### Command Mapping
 
-| uvenv command         | uv equivalent                         | Notes                          |
-| --------------------- | ------------------------------------- | ------------------------------ |
-| `python install 3.11` | `uv python install 3.11`              | Direct wrapper                 |
-| `python list`         | `uv python list`                      | Enhanced with status table     |
-| `create name 3.11`    | `uv venv ~/.uvenv/name --python 3.11` | Custom path                    |
-| `activate name`       | N/A                                   | Generates shell script         |
-| `list`                | N/A                                   | Custom implementation          |
-| `remove name`         | N/A                                   | Custom implementation          |
-| `lock name`           | N/A                                   | Uses pip freeze + metadata     |
-| `thaw name`           | N/A                                   | Uses pip install from lockfile |
+| uvve command          | uv equivalent                        | Notes                          |
+| --------------------- | ------------------------------------ | ------------------------------ |
+| `python install 3.11` | `uv python install 3.11`             | Direct wrapper                 |
+| `python list`         | `uv python list`                     | Enhanced with status table     |
+| `create name 3.11`    | `uv venv ~/.uvve/name --python 3.11` | Custom path                    |
+| `activate name`       | N/A                                  | Generates shell script         |
+| `list`                | N/A                                  | Custom implementation          |
+| `remove name`         | N/A                                  | Custom implementation          |
+| `lock name`           | N/A                                  | Uses pip freeze + metadata     |
+| `thaw name`           | N/A                                  | Uses pip install from lockfile |
 
 ### Shell Integration Strategy
 

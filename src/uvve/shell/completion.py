@@ -1,10 +1,10 @@
-"""Shell completion support for uvenv."""
+"""Shell completion support for uvve."""
 
 from typing import List
 
 
 class CompletionManager:
-    """Manages shell completion for uvenv commands."""
+    """Manages shell completion for uvve commands."""
 
     def get_bash_completion(self) -> str:
         """Generate bash completion script.
@@ -13,8 +13,8 @@ class CompletionManager:
             Bash completion script
         """
         return """
-# Bash completion for uvenv
-_uvenv_completion() {
+# Bash completion for uvve
+_uvve_completion() {
     local cur prev commands
     
     cur="${COMP_WORDS[COMP_CWORD]}"
@@ -22,13 +22,13 @@ _uvenv_completion() {
     commands="create activate list remove lock thaw python-install"
     
     case "${prev}" in
-        uvenv)
+        uvve)
             COMPREPLY=($(compgen -W "${commands}" -- ${cur}))
             return 0
             ;;
         activate|remove|lock|thaw)
             # Complete with environment names
-            local envs=$(uvenv list --quiet 2>/dev/null | awk '{print $1}')
+            local envs=$(uvve list --quiet 2>/dev/null | awk '{print $1}')
             COMPREPLY=($(compgen -W "${envs}" -- ${cur}))
             return 0
             ;;
@@ -43,7 +43,7 @@ _uvenv_completion() {
     esac
 }
 
-complete -F _uvenv_completion uvenv
+complete -F _uvve_completion uvve
 """
 
     def get_zsh_completion(self) -> str:
@@ -53,10 +53,10 @@ complete -F _uvenv_completion uvenv
             Zsh completion script
         """
         return """
-# Zsh completion for uvenv
-#compdef uvenv
+# Zsh completion for uvve
+#compdef uvve
 
-_uvenv() {
+_uvve() {
     local context state line
     typeset -A opt_args
 
@@ -78,14 +78,14 @@ _uvenv() {
         args)
             case ${words[2]} in
                 activate|remove|lock|thaw)
-                    _values 'environments' ${(f)"$(uvenv list --quiet 2>/dev/null | awk '{print $1}')"}
+                    _values 'environments' ${(f)"$(uvve list --quiet 2>/dev/null | awk '{print $1}')"}
                     ;;
             esac
             ;;
     esac
 }
 
-_uvenv "$@"
+_uvve "$@"
 """
 
     def get_fish_completion(self) -> str:
@@ -95,22 +95,22 @@ _uvenv "$@"
             Fish completion script
         """
         return """
-# Fish completion for uvenv
+# Fish completion for uvve
 
 # Main commands
-complete -c uvenv -f -n '__fish_use_subcommand' -a 'create' -d 'Create a new virtual environment'
-complete -c uvenv -f -n '__fish_use_subcommand' -a 'activate' -d 'Print activation script for environment'
-complete -c uvenv -f -n '__fish_use_subcommand' -a 'list' -d 'List all virtual environments'
-complete -c uvenv -f -n '__fish_use_subcommand' -a 'remove' -d 'Remove a virtual environment'
-complete -c uvenv -f -n '__fish_use_subcommand' -a 'lock' -d 'Generate lockfile for environment'
-complete -c uvenv -f -n '__fish_use_subcommand' -a 'thaw' -d 'Rebuild environment from lockfile'
-complete -c uvenv -f -n '__fish_use_subcommand' -a 'python-install' -d 'Install Python version'
+complete -c uvve -f -n '__fish_use_subcommand' -a 'create' -d 'Create a new virtual environment'
+complete -c uvve -f -n '__fish_use_subcommand' -a 'activate' -d 'Print activation script for environment'
+complete -c uvve -f -n '__fish_use_subcommand' -a 'list' -d 'List all virtual environments'
+complete -c uvve -f -n '__fish_use_subcommand' -a 'remove' -d 'Remove a virtual environment'
+complete -c uvve -f -n '__fish_use_subcommand' -a 'lock' -d 'Generate lockfile for environment'
+complete -c uvve -f -n '__fish_use_subcommand' -a 'thaw' -d 'Rebuild environment from lockfile'
+complete -c uvve -f -n '__fish_use_subcommand' -a 'python-install' -d 'Install Python version'
 
 # Environment name completion for relevant commands
-complete -c uvenv -f -n '__fish_seen_subcommand_from activate remove lock thaw' -a '(uvenv list --quiet 2>/dev/null | awk \'{print $1}\')'
+complete -c uvve -f -n '__fish_seen_subcommand_from activate remove lock thaw' -a '(uvve list --quiet 2>/dev/null | awk \'{print $1}\')'
 
 # Options
-complete -c uvenv -f -n '__fish_seen_subcommand_from remove' -l force -s f -d 'Force removal without confirmation'
+complete -c uvve -f -n '__fish_seen_subcommand_from remove' -l force -s f -d 'Force removal without confirmation'
 """
 
     def get_environment_names(self) -> List[str]:
@@ -140,7 +140,7 @@ complete -c uvenv -f -n '__fish_seen_subcommand_from remove' -l force -s f -d 'F
             path = install_path or "~/.zshrc"
             return f"Add the following to {path}:\\n\\n{self.get_zsh_completion()}"
         elif shell == "fish":
-            path = install_path or "~/.config/fish/completions/uvenv.fish"
+            path = install_path or "~/.config/fish/completions/uvve.fish"
             return f"Save the following to {path}:\\n\\n{self.get_fish_completion()}"
         else:
             return f"Shell '{shell}' is not supported for completion"

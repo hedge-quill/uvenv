@@ -1,9 +1,9 @@
-"""Shell activation script generation for uvenv."""
+"""Shell activation script generation for uvve."""
 
 import os
 from pathlib import Path
 
-from uvenv.core.paths import PathManager
+from uvve.core.paths import PathManager
 
 
 class ActivationManager:
@@ -122,9 +122,9 @@ class ActivationManager:
         return f"& {activate_script}"
 
     def generate_shell_integration(self, shell: str | None = None) -> str:
-        """Generate shell integration script for uvenv.
+        """Generate shell integration script for uvve.
 
-        This creates a shell function that wraps the uvenv command to handle
+        This creates a shell function that wraps the uvve command to handle
         activation automatically without requiring eval.
 
         Args:
@@ -147,59 +147,59 @@ class ActivationManager:
 
     def _generate_bash_integration(self) -> str:
         """Generate bash/zsh shell integration script."""
-        return """# uvenv shell integration
-uvenv() {
+        return """# uvve shell integration
+uvve() {
     local command="$1"
 
     if [[ "$command" == "activate" ]]; then
         if [[ -z "$2" ]]; then
-            echo "Usage: uvenv activate <environment_name>"
+            echo "Usage: uvve activate <environment_name>"
             return 1
         fi
         # Use eval to actually activate the environment
-        eval "$(command uvenv activate "$2")"
+        eval "$(command uvve activate "$2")"
     else
-        # For all other commands, just call uvenv normally
-        command uvenv "$@"
+        # For all other commands, just call uvve normally
+        command uvve "$@"
     fi
 }"""
 
     def _generate_fish_integration(self) -> str:
         """Generate fish shell integration script."""
-        return """# uvenv shell integration
-function uvenv
+        return """# uvve shell integration
+function uvve
     set command $argv[1]
 
     if test "$command" = "activate"
         if test (count $argv) -lt 2
-            echo "Usage: uvenv activate <environment_name>"
+            echo "Usage: uvve activate <environment_name>"
             return 1
         end
         # Use eval to actually activate the environment
-        eval (command uvenv activate $argv[2])
+        eval (command uvve activate $argv[2])
     else
-        # For all other commands, just call uvenv normally
-        command uvenv $argv
+        # For all other commands, just call uvve normally
+        command uvve $argv
     end
 end"""
 
     def _generate_powershell_integration(self) -> str:
         """Generate PowerShell integration script."""
-        return """# uvenv shell integration
-function uvenv {
+        return """# uvve shell integration
+function uvve {
     param([string]$Command, [string[]]$Args)
 
     if ($Command -eq "activate") {
         if (-not $Args -or $Args.Length -eq 0) {
-            Write-Host "Usage: uvenv activate <environment_name>"
+            Write-Host "Usage: uvve activate <environment_name>"
             return
         }
         # Execute the activation script directly
-        $activationScript = & uvenv.exe activate $Args[0]
+        $activationScript = & uvve.exe activate $Args[0]
         Invoke-Expression $activationScript
     }
     else {
-        # For all other commands, just call uvenv normally
-        & uvenv.exe $Command @Args
+        # For all other commands, just call uvve normally
+        & uvve.exe $Command @Args
     }
 }"""

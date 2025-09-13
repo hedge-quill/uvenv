@@ -1,4 +1,4 @@
-"""Lockfile management for uvenv."""
+"""Lockfile management for uvve."""
 
 import subprocess
 from datetime import datetime
@@ -6,7 +6,7 @@ from typing import Any
 
 import toml
 
-from uvenv.core.paths import PathManager
+from uvve.core.paths import PathManager
 
 
 class FreezeManager:
@@ -56,7 +56,7 @@ class FreezeManager:
 
             # Create lockfile content
             lockfile_data = {
-                "uvenv": {"version": "0.1.0", "generated": datetime.now().isoformat()},
+                "uvve": {"version": "0.1.0", "generated": datetime.now().isoformat()},
                 "environment": {"name": name, "python_version": python_version},
                 "dependencies": dependencies,
                 "metadata": {

@@ -1,8 +1,8 @@
-"""Tests for uvenv python module."""
+"""Tests for uvve python module."""
 
 from unittest.mock import Mock, patch
 
-from uvenv.core.python import PythonManager
+from uvve.core.python import PythonManager
 
 
 class TestPythonManager:
@@ -12,7 +12,7 @@ class TestPythonManager:
         """Set up test fixtures."""
         self.manager = PythonManager()
 
-    @patch("uvenv.core.python.subprocess.run")
+    @patch("uvve.core.python.subprocess.run")
     def test_install_success(self, mock_run):
         """Test successful Python installation."""
         mock_run.return_value = Mock(stderr="", returncode=0)
@@ -28,7 +28,7 @@ class TestPythonManager:
             check=True,
         )
 
-    @patch("uvenv.core.python.subprocess.run")
+    @patch("uvve.core.python.subprocess.run")
     def test_install_failure(self, mock_run):
         """Test failed Python installation."""
         from subprocess import CalledProcessError
@@ -41,7 +41,7 @@ class TestPythonManager:
         except RuntimeError as e:
             assert "Failed to install Python 3.11.0" in str(e)
 
-    @patch("uvenv.core.python.subprocess.run")
+    @patch("uvve.core.python.subprocess.run")
     def test_list_installed_success(self, mock_run):
         """Test successful listing of installed Python versions."""
         mock_output = "3.11.0 /path/to/python3.11\n3.10.5 /path/to/python3.10\n"
@@ -55,7 +55,7 @@ class TestPythonManager:
         assert versions[1]["version"] == "3.10.5"
         assert versions[1]["path"] == "/path/to/python3.10"
 
-    @patch("uvenv.core.python.subprocess.run")
+    @patch("uvve.core.python.subprocess.run")
     def test_list_installed_empty(self, mock_run):
         """Test listing when no Python versions are installed."""
         mock_run.return_value = Mock(stdout="", returncode=0)
@@ -63,7 +63,7 @@ class TestPythonManager:
         versions = self.manager.list_installed()
         assert versions == []
 
-    @patch("uvenv.core.python.subprocess.run")
+    @patch("uvve.core.python.subprocess.run")
     def test_list_available_success(self, mock_run):
         """Test successful listing of available Python versions."""
         mock_output = "3.11.0\n3.10.5\n3.9.12\n"

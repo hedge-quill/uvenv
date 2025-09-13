@@ -1,9 +1,9 @@
-"""Tests for uvenv CLI module."""
+"""Tests for uvve CLI module."""
 
 import pytest
 from typer.testing import CliRunner
 
-from uvenv.cli import app
+from uvve.cli import app
 
 
 class TestCLI:
@@ -21,7 +21,7 @@ class TestCLI:
         """Test the help command."""
         result = self.runner.invoke(app, ["--help"])
         assert result.exit_code == 0
-        assert "uvenv" in result.stdout
+        assert "uvve" in result.stdout
 
     def test_create_command_help(self):
         """Test create command help."""

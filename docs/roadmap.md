@@ -1,4 +1,4 @@
-# uvenv Roadmap
+# uvve Roadmap
 
 This document outlines ### ✅ Phase 2: Enhanced Features (Complete)
 
@@ -6,11 +6,11 @@ This document outlines ### ✅ Phase 2: Enhanced Features (Complete)
 - ✅ **Usage Analytics**: Track environment usage patterns with detailed statistics
 - ✅ **Cleanup Automation**: Remove unused environments with smart detection
 - ✅ **Enhanced List Command**: Show usage statistics and sort by various criteria
-- ✅ **Metadata Editing**: Commands to edit descriptions, tags, and project associations planned evolution of `uvenv` from MVP to a production-grade Python environment management tool.
+- ✅ **Metadata Editing**: Commands to edit descriptions, tags, and project associations planned evolution of `uvve` from MVP to a production-grade Python environment management tool.
 
 ## 🌱 Growth Path Overview
 
-The development of `uvenv` follows a phased approach, starting with a fast-to-market MVP and evolving toward a comprehensive environment management solution.
+The development of `uvve` follows a phased approach, starting with a fast-to-market MVP and evolving toward a comprehensive environment management solution.
 
 ### Strategic Approach
 
@@ -25,15 +25,15 @@ This mirrors successful tool evolution patterns (Poetry → Rye, Pip → uv).
 
 ### Core Features ✅
 
-- ✅ **Environment Management**: `uvenv create`, `list`, `activate`, `remove`
+- ✅ **Environment Management**: `uvve create`, `list`, `activate`, `remove`
 - ✅ **Python Integration**: Wrap `uv python` + `uv venv`
-- ✅ **Centralized Storage**: Store environments in `~/.uvenv`
+- ✅ **Centralized Storage**: Store environments in `~/.uvve`
 - ✅ **Cross-platform Support**: Windows, macOS, Linux compatibility
 - ✅ **Rich CLI**: Beautiful output with Typer and Rich
 
 ### Lockfile System ✅
 
-- ✅ **Freeze & Thaw**: `uvenv lock` and `uvenv thaw` commands
+- ✅ **Freeze & Thaw**: `uvve lock` and `uvve thaw` commands
 - ✅ **TOML Format**: Structured, human-readable lockfiles
 - ✅ **Metadata Tracking**: Python version, timestamp, platform info
 - ✅ **Reproducibility**: Deterministic environment recreation
@@ -58,32 +58,32 @@ This mirrors successful tool evolution patterns (Poetry → Rye, Pip → uv).
 
 - [ ] **Homebrew Formula**: Easy installation on macOS/Linux
   ```bash
-  brew install uvenv
+  brew install uvve
   ```
 - [ ] **Package Managers**: apt, yum, chocolatey support
 - [ ] **Self-updating**: Built-in update mechanism
 
 ### Project Integration
 
-- [ ] **Global Hooks**: `.uvenv-version` files in project directories
+- [ ] **Global Hooks**: `.uvve-version` files in project directories
   ```bash
   cd myproject/
-  cat .uvenv-version  # myproject-env
-  uvenv activate      # auto-detects environment
+  cat .uvve-version  # myproject-env
+  uvve activate      # auto-detects environment
   ```
 - [ ] **Project Linking**: Connect projects to environments
   ```bash
-  uvenv link myproject-env    # link current dir to environment
-  uvenv unlink               # remove link
-  uvenv status               # show current project/env status
+  uvve link myproject-env    # link current dir to environment
+  uvve unlink               # remove link
+  uvve status               # show current project/env status
   ```
 
 ### Workspace Features
 
 - [ ] **Workspace Isolation**: Optional `.venv` symlinks
   ```bash
-  uvenv workspace enable     # create .venv -> ~/.uvenv/name
-  uvenv workspace disable    # remove symlink
+  uvve workspace enable     # create .venv -> ~/.uvve/name
+  uvve workspace disable    # remove symlink
   ```
 - [ ] **IDE Integration**: VS Code, PyCharm extensions
 - [ ] **Git Integration**: Hooks for environment consistency
@@ -104,19 +104,19 @@ This mirrors successful tool evolution patterns (Poetry → Rye, Pip → uv).
 - [ ] **uv.lock Linking**: Connect project dependencies with managed environments
   ```bash
   uv project init               # project metadata
-  uvenv link myproj            # link current env to project
-  uvenv sync-project           # sync env with uv.lock
+  uvve link myproj            # link current env to project
+  uvve sync-project           # sync env with uv.lock
   ```
 
 ### Complementary Responsibilities
 
 - **uv Focus**: Project-focused (dependencies, builds, publishing)
-- **uvenv Focus**: Environment-focused (versions, shims, isolation)
+- **uvve Focus**: Environment-focused (versions, shims, isolation)
 
 ### Future Collaboration
 
 - [ ] **Shared Configuration**: Common config formats where applicable
-- [ ] **Tool Integration**: `uv` commands aware of `uvenv` environments
+- [ ] **Tool Integration**: `uv` commands aware of `uvve` environments
 - [ ] **Unified Workflows**: Seamless developer experience
 
 ## 🦀 Phase 5: Rust Evolution (Future Consideration)
@@ -200,7 +200,7 @@ This mirrors successful tool evolution patterns (Poetry → Rye, Pip → uv).
 
 ## 🔮 Long-term Vision
 
-uvenv aims to become the standard Python environment management tool by providing:
+uvve aims to become the standard Python environment management tool by providing:
 
 1. **Simplicity**: Intuitive CLI that just works
 2. **Performance**: Fast operations leveraging uv's speed
