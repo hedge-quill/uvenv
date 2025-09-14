@@ -131,7 +131,7 @@ This **just shows** the activation command. You need to copy and run the output 
 | `uvve cleanup`                  | Clean up unused environments                        |
 | `uvve edit <name>`              | Edit environment metadata (description, tags)       |
 | `uvve setup-azure`              | Set up Azure DevOps package feed authentication     |
-| `uvve azure-status`             | Show Azure DevOps configuration status              |
+| `uvve feed-status`              | Show Azure DevOps configuration status              |
 | `uvve shell-integration`        | Install shell integration for direct activation     |
 | `uvve --install-completion`     | Install tab completion for your shell               |
 | `uvve --show-completion`        | Show completion script for manual installation      |
@@ -284,14 +284,14 @@ az login
 - 📦 **Keyring Installation**: Installs `keyring` and `artifacts-keyring` into the environment
 - 🌐 **PyPI Preservation**: Ensures PyPI access is maintained alongside private feeds
 - 🔗 **Multiple Feeds**: Support for multiple Azure DevOps feeds in the same environment
-- 📊 **Status Monitoring**: Check configuration status with `uvve azure-status`
+- 📊 **Status Monitoring**: Check configuration status with `uvve feed-status`
 
 ### Commands
 
-| Command             | Description                                     |
-| ------------------- | ----------------------------------------------- |
-| `uvve setup-azure`  | Set up Azure DevOps package feed authentication |
-| `uvve azure-status` | Show Azure DevOps configuration status          |
+| Command            | Description                                     |
+| ------------------ | ----------------------------------------------- |
+| `uvve setup-azure` | Set up Azure DevOps package feed authentication |
+| `uvve feed-status` | Show Azure DevOps configuration status          |
 
 ### Detailed Setup Process
 
@@ -368,7 +368,7 @@ url = "https://pkgs.dev.azure.com/myorg/_packaging/myfeed/pypi/simple/"
 Check your Azure configuration at any time:
 
 ```bash
-uvve azure-status
+uvve feed-status
 ```
 
 Example output:
@@ -436,7 +436,7 @@ az account show
 
 ```bash
 # Check Azure status
-uvve azure-status
+uvve feed-status
 
 # Verify environment variables
 echo $UV_KEYRING_PROVIDER
@@ -453,7 +453,7 @@ uv pip list | grep keyring
 cat ~/.config/uv/uv.toml
 ```
 
-```bash
+````bash
 uvve --show-completion >> ~/.bashrc # for bash
 **What you get with completion:**
 
