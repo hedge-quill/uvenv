@@ -36,9 +36,9 @@ dev = [
 uvve = "uvve.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/mgale694/uvve"
-Repository = "https://github.com/mgale694/uvve"
-Issues = "https://github.com/mgale694/uvve/issues"
+Homepage = "https://github.com/hedge-quill/uvve"
+Repository = "https://github.com/hedge-quill/uvve"
+Issues = "https://github.com/hedge-quill/uvve/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/uvve"]
