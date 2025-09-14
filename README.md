@@ -453,10 +453,8 @@ uv pip list | grep keyring
 cat ~/.config/uv/uv.toml
 ```
 
+```bash
 uvve --show-completion >> ~/.bashrc # for bash
-
-````
-
 **What you get with completion:**
 
 - ✅ Command completion (`uvve <TAB>` shows available commands)
