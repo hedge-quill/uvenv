@@ -9,6 +9,7 @@ from rich.table import Table
 
 from uvve import __version__
 from uvve.core.analytics import AnalyticsManager
+from uvve.core.azure import AzureManager
 from uvve.core.freeze import FreezeManager
 from uvve.core.manager import EnvironmentManager
 from uvve.core.python import PythonManager
@@ -29,6 +30,14 @@ app = typer.Typer(
     help="A CLI tool for managing Python virtual environments using uv",
     rich_markup_mode="rich",
 )
+
+# Create Python command group
+python_app = typer.Typer(
+    name="python",
+    help="Manage Python versions",
+    rich_markup_mode="rich",
+)
+app.add_typer(python_app, name="python")
 
 
 @app.callback()
@@ -78,15 +87,6 @@ def complete_python_versions() -> list[str]:
     except Exception:
         # Fallback to common versions
         return ["3.12", "3.11", "3.10", "3.9", "3.8"]
-
-
-# Create Python command group
-python_app = typer.Typer(
-    name="python",
-    help="Manage Python versions",
-    rich_markup_mode="rich",
-)
-app.add_typer(python_app, name="python")
 
 
 @python_app.command()
@@ -140,93 +140,6 @@ def python_list() -> None:
 
     except Exception as e:
         console.print(f"[red]✗[/red] Failed to list Python versions: {e}")
-        raise typer.Exit(1) from None
-
-
-@app.command()
-def create(
-    name: str = typer.Argument(..., help="Name of the virtual environment"),
-    python_version: str = typer.Argument(
-        ...,
-        help="Python version for the environment",
-        autocompletion=complete_python_versions,
-    ),
-    description: str = typer.Option(
-        None, "--description", "-d", help="Description for the environment"
-    ),
-    add_tag: list[str] | None = typer.Option(
-        None,
-        "--add-tag",
-        "-t",
-        help="Add a tag to the environment (can be used multiple times)",
-    ),
-) -> None:
-    """Create a new virtual environment."""
-    console.print(
-        f"[green]Creating environment '{name}' with Python {python_version}...[/green]"
-    )
-
-    # Handle mutable default
-    if add_tag is None:
-        add_tag = []
-
-    # Interactive flow if no description or tags provided
-    final_description = description
-    final_tags = list(add_tag)
-
-    if description is None:
-        final_description = typer.prompt(
-            "Description (optional, press Enter to skip)",
-            default="",
-            show_default=False,
-        )
-
-    if not add_tag:
-        # Interactive tag collection
-        console.print("[cyan]Add tags (optional):[/cyan]")
-        console.print(
-            "[dim]Press Enter after each tag, or just press Enter to finish[/dim]"
-        )
-
-        while True:
-            tag = typer.prompt("Tag", default="", show_default=False)
-            if not tag.strip():
-                break
-            final_tags.append(tag.strip())
-
-    try:
-        env_manager.create(name, python_version, final_description, final_tags)
-
-        # Show creation summary
-        console.print(f"[green]✓[/green] Environment '{name}' created successfully")
-
-        if final_description:
-            console.print(f"[dim]Description:[/dim] {final_description}")
-        if final_tags:
-            console.print(f"[dim]Tags:[/dim] {', '.join(final_tags)}")
-
-    except Exception as e:
-        console.print(f"[red]✗[/red] Failed to create environment '{name}': {e}")
-        raise typer.Exit(1) from None
-
-
-@app.command()
-def activate(
-    name: str = typer.Argument(
-        ...,
-        help="Name of the virtual environment",
-        autocompletion=complete_environment_names,
-    ),
-) -> None:
-    """Print shell activation snippet for the environment."""
-    try:
-        # Update usage statistics when activating
-        env_manager.update_usage(name)
-
-        activation_script = env_manager.get_activation_script(name)
-        console.print(activation_script)
-    except Exception as e:
-        console.print(f"[red]✗[/red] Failed to get activation script for '{name}': {e}")
         raise typer.Exit(1) from None
 
 
@@ -362,6 +275,93 @@ def env_list(
 
 
 @app.command()
+def create(
+    name: str = typer.Argument(..., help="Name of the virtual environment"),
+    python_version: str = typer.Argument(
+        ...,
+        help="Python version for the environment",
+        autocompletion=complete_python_versions,
+    ),
+    description: str = typer.Option(
+        None, "--description", "-d", help="Description for the environment"
+    ),
+    add_tag: list[str] | None = typer.Option(
+        None,
+        "--add-tag",
+        "-t",
+        help="Add a tag to the environment (can be used multiple times)",
+    ),
+) -> None:
+    """Create a new virtual environment."""
+    console.print(
+        f"[green]Creating environment '{name}' with Python {python_version}...[/green]"
+    )
+
+    # Handle mutable default
+    if add_tag is None:
+        add_tag = []
+
+    # Interactive flow if no description or tags provided
+    final_description = description
+    final_tags = list(add_tag)
+
+    if description is None:
+        final_description = typer.prompt(
+            "Description (optional, press Enter to skip)",
+            default="",
+            show_default=False,
+        )
+
+    if not add_tag:
+        # Interactive tag collection
+        console.print("[cyan]Add tags (optional):[/cyan]")
+        console.print(
+            "[dim]Press Enter after each tag, or just press Enter to finish[/dim]"
+        )
+
+        while True:
+            tag = typer.prompt("Tag", default="", show_default=False)
+            if not tag.strip():
+                break
+            final_tags.append(tag.strip())
+
+    try:
+        env_manager.create(name, python_version, final_description, final_tags)
+
+        # Show creation summary
+        console.print(f"[green]✓[/green] Environment '{name}' created successfully")
+
+        if final_description:
+            console.print(f"[dim]Description:[/dim] {final_description}")
+        if final_tags:
+            console.print(f"[dim]Tags:[/dim] {', '.join(final_tags)}")
+
+    except Exception as e:
+        console.print(f"[red]✗[/red] Failed to create environment '{name}': {e}")
+        raise typer.Exit(1) from None
+
+
+@app.command()
+def activate(
+    name: str = typer.Argument(
+        ...,
+        help="Name of the virtual environment",
+        autocompletion=complete_environment_names,
+    ),
+) -> None:
+    """Print shell activation snippet for the environment."""
+    try:
+        # Update usage statistics when activating
+        env_manager.update_usage(name)
+
+        activation_script = env_manager.get_activation_script(name)
+        console.print(activation_script)
+    except Exception as e:
+        console.print(f"[red]✗[/red] Failed to get activation script for '{name}': {e}")
+        raise typer.Exit(1) from None
+
+
+@app.command()
 def remove(
     name: str = typer.Argument(
         ...,
@@ -426,55 +426,163 @@ def thaw(
 
 
 @app.command()
-def shell_integration(
-    shell: str = typer.Option(
-        None,
-        "--shell",
-        help="Target shell (bash, zsh, fish, powershell). Auto-detected if not "
-        "specified.",
-    ),
-    print_only: bool = typer.Option(
-        False,
-        "--print",
-        help="Print integration script instead of installation instructions",
-    ),
-) -> None:
-    """Install shell integration for uvve.
-
-    This enables 'uvve activate <env>' to work directly without eval.
-    """
+def status() -> None:
+    """Show environment health overview."""
     try:
-        integration_script = activation_manager.generate_shell_integration(shell)
+        summary = analytics_manager.get_usage_summary()
 
-        if print_only:
-            console.print(integration_script)
+        console.print(f"\n[bold cyan]Environment Health Overview[/bold cyan]")
+
+        # Quick stats
+        total = summary["total_environments"]
+        unused = summary["unused_environments"]
+
+        if total == 0:
+            console.print("[yellow]No environments found[/yellow]")
             return
 
-        detected_shell = activation_manager._detect_shell() if shell is None else shell
+        # Health summary
+        health_table = Table()
+        health_table.add_column("Environment", style="cyan")
+        health_table.add_column("Last Used", style="white")
+        health_table.add_column("Usage Count", style="green")
+        health_table.add_column("Size", style="blue")
+        health_table.add_column("Health", style="magenta")
 
-        # Show installation instructions
-        console.print(f"[green]Shell integration for {detected_shell}[/green]")
-        console.print(
-            "\n[yellow]Add the following to your shell configuration:[/yellow]"
-        )
+        for env in summary["environments"]:
+            # Health status
+            usage_count = env["usage_count"]
+            days_since_use = env["days_since_use"]
 
-        if detected_shell in ("bash", "zsh"):
-            config_file = "~/.bashrc" if detected_shell == "bash" else "~/.zshrc"
-            console.print(f"\n[cyan]# Add to {config_file}[/cyan]")
-        elif detected_shell == "fish":
-            console.print("\n[cyan]# Add to ~/.config/fish/config.fish[/cyan]")
-        elif detected_shell == "powershell":
-            console.print("\n[cyan]# Add to your PowerShell profile[/cyan]")
+            if usage_count == 0:
+                health = "🔴 Never used"
+            elif days_since_use is None:
+                health = "🟡 Recently created"
+            elif days_since_use > 90:
+                health = "🔴 Stale (90+ days)"
+            elif days_since_use > 30:
+                health = "🟡 Unused (30+ days)"
+            elif usage_count < 5:
+                health = "🟡 Low usage"
+            else:
+                health = "🟢 Healthy"
 
-        console.print(f"\n{integration_script}")
+            # Format last used
+            if env["last_used"]:
+                if days_since_use is not None:
+                    if days_since_use == 0:
+                        last_used_str = "Today"
+                    elif days_since_use == 1:
+                        last_used_str = "Yesterday"
+                    else:
+                        last_used_str = f"{days_since_use}d ago"
+                else:
+                    last_used_str = "Recently"
+            else:
+                last_used_str = "Never"
 
-        console.print("\n[green]After adding this and restarting your shell:[/green]")
-        console.print("• [cyan]uvve activate myenv[/cyan] - Will activate directly")
-        console.print("• [cyan]uvve list[/cyan] - Works normally")
-        console.print("• [cyan]uvve python install 3.12[/cyan] - Works normally")
+            # Format size
+            size_bytes = env["size_bytes"]
+            if size_bytes < 1024 * 1024:
+                size_str = f"{size_bytes / 1024:.0f}KB"
+            elif size_bytes < 1024 * 1024 * 1024:
+                size_str = f"{size_bytes / (1024 * 1024):.0f}MB"
+            else:
+                size_str = f"{size_bytes / (1024 * 1024 * 1024):.1f}GB"
+
+            health_table.add_row(
+                env["name"], last_used_str, str(usage_count), size_str, health
+            )
+
+        console.print(health_table)
+
+        # Summary message
+        if unused > 0:
+            console.print(
+                f"\n[yellow]💡 Found {unused} unused environment(s). Consider running `uvve cleanup --dry-run` to review.[/yellow]"
+            )
+        else:
+            console.print(
+                f"\n[green]✅ All {total} environments are being used actively![/green]"
+            )
 
     except Exception as e:
-        console.print(f"[red]✗[/red] Failed to generate shell integration: {e}")
+        console.print(f"[red]✗[/red] Failed to get status: {e}")
+        raise typer.Exit(1) from None
+
+
+@app.command()
+def edit(
+    name: str = typer.Argument(
+        ...,
+        help="Name of the virtual environment",
+        autocompletion=complete_environment_names,
+    ),
+    description: str = typer.Option(
+        None, "--description", "-d", help="Set environment description"
+    ),
+    add_tag: str = typer.Option(None, "--add-tag", help="Add a tag to the environment"),
+    remove_tag: str = typer.Option(
+        None, "--remove-tag", help="Remove a tag from the environment"
+    ),
+    project_root: str = typer.Option(
+        None, "--project-root", help="Set project root directory"
+    ),
+) -> None:
+    """Edit environment metadata."""
+    try:
+        if not any([description is not None, add_tag, remove_tag, project_root]):
+            console.print(
+                "[yellow]No changes specified. Use --help to see available options.[/yellow]"
+            )
+            return
+
+        # Get current metadata
+        metadata = env_manager.get_metadata(name)
+
+        # Update description
+        if description is not None:
+            env_manager.update_metadata_field(name, "description", description)
+            console.print(f"[green]✓[/green] Updated description for '{name}'")
+
+        # Add tag
+        if add_tag:
+            current_tags = metadata.get("tags", [])
+            if add_tag not in current_tags:
+                current_tags.append(add_tag)
+                env_manager.update_metadata_field(name, "tags", current_tags)
+                console.print(f"[green]✓[/green] Added tag '{add_tag}' to '{name}'")
+            else:
+                console.print(
+                    f"[yellow]Tag '{add_tag}' already exists on '{name}'[/yellow]"
+                )
+
+        # Remove tag
+        if remove_tag:
+            current_tags = metadata.get("tags", [])
+            if remove_tag in current_tags:
+                current_tags.remove(remove_tag)
+                env_manager.update_metadata_field(name, "tags", current_tags)
+                console.print(
+                    f"[green]✓[/green] Removed tag '{remove_tag}' from '{name}'"
+                )
+            else:
+                console.print(
+                    f"[yellow]Tag '{remove_tag}' not found on '{name}'[/yellow]"
+                )
+
+        # Update project root
+        if project_root:
+            import os
+
+            project_root_path = os.path.abspath(os.path.expanduser(project_root))
+            env_manager.update_metadata_field(name, "project_root", project_root_path)
+            console.print(
+                f"[green]✓[/green] Set project root for '{name}' to '{project_root_path}'"
+            )
+
+    except Exception as e:
+        console.print(f"[red]✗[/red] Failed to edit metadata for '{name}': {e}")
         raise typer.Exit(1) from None
 
 
@@ -621,92 +729,6 @@ def analytics(
 
     except Exception as e:
         console.print(f"[red]✗[/red] Failed to get analytics: {e}")
-        raise typer.Exit(1) from None
-
-
-@app.command()
-def status() -> None:
-    """Show environment health overview."""
-    try:
-        summary = analytics_manager.get_usage_summary()
-
-        console.print(f"\n[bold cyan]Environment Health Overview[/bold cyan]")
-
-        # Quick stats
-        total = summary["total_environments"]
-        unused = summary["unused_environments"]
-
-        if total == 0:
-            console.print("[yellow]No environments found[/yellow]")
-            return
-
-        # Health summary
-        health_table = Table()
-        health_table.add_column("Environment", style="cyan")
-        health_table.add_column("Last Used", style="white")
-        health_table.add_column("Usage Count", style="green")
-        health_table.add_column("Size", style="blue")
-        health_table.add_column("Health", style="magenta")
-
-        for env in summary["environments"]:
-            # Health status
-            usage_count = env["usage_count"]
-            days_since_use = env["days_since_use"]
-
-            if usage_count == 0:
-                health = "🔴 Never used"
-            elif days_since_use is None:
-                health = "🟡 Recently created"
-            elif days_since_use > 90:
-                health = "🔴 Stale (90+ days)"
-            elif days_since_use > 30:
-                health = "🟡 Unused (30+ days)"
-            elif usage_count < 5:
-                health = "🟡 Low usage"
-            else:
-                health = "🟢 Healthy"
-
-            # Format last used
-            if env["last_used"]:
-                if days_since_use is not None:
-                    if days_since_use == 0:
-                        last_used_str = "Today"
-                    elif days_since_use == 1:
-                        last_used_str = "Yesterday"
-                    else:
-                        last_used_str = f"{days_since_use}d ago"
-                else:
-                    last_used_str = "Recently"
-            else:
-                last_used_str = "Never"
-
-            # Format size
-            size_bytes = env["size_bytes"]
-            if size_bytes < 1024 * 1024:
-                size_str = f"{size_bytes / 1024:.0f}KB"
-            elif size_bytes < 1024 * 1024 * 1024:
-                size_str = f"{size_bytes / (1024 * 1024):.0f}MB"
-            else:
-                size_str = f"{size_bytes / (1024 * 1024 * 1024):.1f}GB"
-
-            health_table.add_row(
-                env["name"], last_used_str, str(usage_count), size_str, health
-            )
-
-        console.print(health_table)
-
-        # Summary message
-        if unused > 0:
-            console.print(
-                f"\n[yellow]💡 Found {unused} unused environment(s). Consider running `uvve cleanup --dry-run` to review.[/yellow]"
-            )
-        else:
-            console.print(
-                f"\n[green]✅ All {total} environments are being used actively![/green]"
-            )
-
-    except Exception as e:
-        console.print(f"[red]✗[/red] Failed to get status: {e}")
         raise typer.Exit(1) from None
 
 
@@ -874,77 +896,210 @@ def cleanup(
 
 
 @app.command()
-def edit(
-    name: str = typer.Argument(
-        ...,
-        help="Name of the virtual environment",
-        autocompletion=complete_environment_names,
+def shell_integration(
+    shell: str = typer.Option(
+        None,
+        "--shell",
+        help="Target shell (bash, zsh, fish, powershell). Auto-detected if not "
+        "specified.",
     ),
-    description: str = typer.Option(
-        None, "--description", "-d", help="Set environment description"
-    ),
-    add_tag: str = typer.Option(None, "--add-tag", help="Add a tag to the environment"),
-    remove_tag: str = typer.Option(
-        None, "--remove-tag", help="Remove a tag from the environment"
-    ),
-    project_root: str = typer.Option(
-        None, "--project-root", help="Set project root directory"
+    print_only: bool = typer.Option(
+        False,
+        "--print",
+        help="Print integration script instead of installation instructions",
     ),
 ) -> None:
-    """Edit environment metadata."""
+    """Install shell integration for uvve.
+
+    This enables 'uvve activate <env>' to work directly without eval.
+    """
     try:
-        if not any([description is not None, add_tag, remove_tag, project_root]):
-            console.print(
-                "[yellow]No changes specified. Use --help to see available options.[/yellow]"
-            )
+        integration_script = activation_manager.generate_shell_integration(shell)
+
+        if print_only:
+            console.print(integration_script)
             return
 
-        # Get current metadata
-        metadata = env_manager.get_metadata(name)
+        detected_shell = activation_manager._detect_shell() if shell is None else shell
 
-        # Update description
-        if description is not None:
-            env_manager.update_metadata_field(name, "description", description)
-            console.print(f"[green]✓[/green] Updated description for '{name}'")
+        # Show installation instructions
+        console.print(f"[green]Shell integration for {detected_shell}[/green]")
+        console.print(
+            "\n[yellow]Add the following to your shell configuration:[/yellow]"
+        )
 
-        # Add tag
-        if add_tag:
-            current_tags = metadata.get("tags", [])
-            if add_tag not in current_tags:
-                current_tags.append(add_tag)
-                env_manager.update_metadata_field(name, "tags", current_tags)
-                console.print(f"[green]✓[/green] Added tag '{add_tag}' to '{name}'")
-            else:
-                console.print(
-                    f"[yellow]Tag '{add_tag}' already exists on '{name}'[/yellow]"
-                )
+        if detected_shell in ("bash", "zsh"):
+            config_file = "~/.bashrc" if detected_shell == "bash" else "~/.zshrc"
+            console.print(f"\n[cyan]# Add to {config_file}[/cyan]")
+        elif detected_shell == "fish":
+            console.print("\n[cyan]# Add to ~/.config/fish/config.fish[/cyan]")
+        elif detected_shell == "powershell":
+            console.print("\n[cyan]# Add to your PowerShell profile[/cyan]")
 
-        # Remove tag
-        if remove_tag:
-            current_tags = metadata.get("tags", [])
-            if remove_tag in current_tags:
-                current_tags.remove(remove_tag)
-                env_manager.update_metadata_field(name, "tags", current_tags)
-                console.print(
-                    f"[green]✓[/green] Removed tag '{remove_tag}' from '{name}'"
-                )
-            else:
-                console.print(
-                    f"[yellow]Tag '{remove_tag}' not found on '{name}'[/yellow]"
-                )
+        console.print(f"\n{integration_script}")
 
-        # Update project root
-        if project_root:
-            import os
-
-            project_root_path = os.path.abspath(os.path.expanduser(project_root))
-            env_manager.update_metadata_field(name, "project_root", project_root_path)
-            console.print(
-                f"[green]✓[/green] Set project root for '{name}' to '{project_root_path}'"
-            )
+        console.print("\n[green]After adding this and restarting your shell:[/green]")
+        console.print("• [cyan]uvve activate myenv[/cyan] - Will activate directly")
+        console.print("• [cyan]uvve list[/cyan] - Works normally")
+        console.print("• [cyan]uvve python install 3.12[/cyan] - Works normally")
 
     except Exception as e:
-        console.print(f"[red]✗[/red] Failed to edit metadata for '{name}': {e}")
+        console.print(f"[red]✗[/red] Failed to generate shell integration: {e}")
+        raise typer.Exit(1) from None
+
+
+@app.command()
+def setup_azure(
+    feed_url: str = typer.Option(
+        None,
+        "--feed-url",
+        "-u",
+        help="Azure DevOps artifact feed URL",
+    ),
+    feed_name: str = typer.Option(
+        "private-registry",
+        "--feed-name",
+        "-n",
+        help="Name for the feed in configuration",
+    ),
+    env_name: str = typer.Option(
+        None,
+        "--env",
+        "-e",
+        help="Environment name to install keyring packages into",
+    ),
+) -> None:
+    """Set up Azure DevOps package feed authentication for uv."""
+    try:
+        azure_manager = AzureManager()
+
+        # Interactive prompt if no URL provided
+        if not feed_url:
+            console.print(
+                "[cyan]Setting up Azure DevOps package feed authentication[/cyan]"
+            )
+            console.print("Please provide your Azure DevOps artifact feed URL.")
+            console.print(
+                "Example: https://pkgs.dev.azure.com/myorg/_packaging/myfeed/pypi/simple/"
+            )
+            feed_url = typer.prompt("Feed URL")
+
+        # Interactive prompt for environment if not provided
+        if not env_name:
+            # Try to detect current active uvve environment
+            current_env = env_manager.get_current_environment()
+            if current_env:
+                env_name = current_env
+                console.print(f"[green]Detected active environment: {env_name}[/green]")
+            else:
+                # No active environment, check available environments
+                envs = env_manager.list()
+
+                if envs:
+                    console.print(
+                        f"\n[cyan]No active uvve environment detected. Available environments:[/cyan]"
+                    )
+                    for env in envs:
+                        console.print(f"  • {env['name']}")
+                    env_name = typer.prompt(
+                        "Environment name to install keyring packages into (or press Enter to skip)",
+                        default="",
+                    )
+                    if not env_name.strip():
+                        env_name = None
+                else:
+                    console.print(
+                        "\n[yellow]No environments found. Keyring packages will be installed globally.[/yellow]"
+                    )
+
+        # Show installation progress
+        if env_name:
+            console.print(
+                f"\n[yellow]Installing keyring packages into environment '{env_name}'...[/yellow]"
+            )
+        else:
+            console.print("\n[yellow]Installing keyring packages globally...[/yellow]")
+
+        # Set up the feed
+        azure_manager.setup_azure_feed(feed_url, feed_name, env_name)
+
+        # Get status
+        status = azure_manager.get_status()
+
+        console.print(
+            f"\n[green]✅ Azure feed '{feed_name}' configured successfully![/green]"
+        )
+        console.print(f"Feed URL: {feed_url}")
+        console.print(f"Config file: {status['config_file_path']}")
+
+        # Show shell setup instructions
+        console.print("\n[bold cyan]Shell Setup Instructions:[/bold cyan]")
+        console.print("Add these environment variables to your shell:")
+
+        commands = azure_manager.get_shell_setup_commands(feed_name)
+        shell = "bash"  # Default, could detect from env
+        console.print(f"\n[yellow]{commands[shell]}[/yellow]")
+
+        console.print(
+            "\n[dim]💡 Make sure you're authenticated with Azure CLI: `az login`[/dim]"
+        )
+
+    except Exception as e:
+        console.print(f"[red]✗[/red] Failed to set up Azure feed: {e}")
+        raise typer.Exit(1) from None
+
+
+@app.command()
+def feed_status() -> None:
+    """Show package feed configuration status."""
+    try:
+        azure_manager = AzureManager()
+        status = azure_manager.get_status()
+
+        console.print("[bold cyan]Package Feed Configuration Status[/bold cyan]\n")
+
+        # Config file status
+        if status["config_file_exists"]:
+            console.print(
+                f"[green]✅[/green] Config file: {status['config_file_path']}"
+            )
+        else:
+            console.print(
+                f"[yellow]⚠️[/yellow] No config file found at: {status['config_file_path']}"
+            )
+
+        # Keyring provider
+        if status["keyring_provider"]:
+            console.print(
+                f"[green]✅[/green] Keyring provider: {status['keyring_provider']}"
+            )
+        else:
+            console.print("[yellow]⚠️[/yellow] UV_KEYRING_PROVIDER not set")
+
+        # Configured indexes
+        if status["configured_indexes"]:
+            console.print(
+                f"\n[bold]Configured Azure Feeds ({len(status['configured_indexes'])}):[/bold]"
+            )
+            for idx in status["configured_indexes"]:
+                console.print(
+                    f"  • {idx.get('name', 'unnamed')}: {idx.get('url', 'no URL')}"
+                )
+        else:
+            console.print("\n[yellow]No Azure feeds configured[/yellow]")
+
+        # Azure environment variables
+        if status["azure_env_vars"]:
+            console.print(
+                f"\n[bold]Azure Environment Variables ({len(status['azure_env_vars'])}):[/bold]"
+            )
+            for var, value in status["azure_env_vars"].items():
+                console.print(f"  • {var}={value}")
+        else:
+            console.print("\n[yellow]No Azure environment variables set[/yellow]")
+
+    except Exception as e:
+        console.print(f"[red]✗[/red] Failed to get Azure status: {e}")
         raise typer.Exit(1) from None
 
 

@@ -15,6 +15,7 @@ A CLI tool for managing Python virtual environments using [uv](https://github.co
 - 📊 **Rich Metadata**: Track environment descriptions, tags, usage patterns, and project links
 - 🧹 **Smart Cleanup**: Automatic detection and removal of unused environments
 - 📈 **Usage Analytics**: Detailed insights into environment usage and health status
+- 🔐 **Azure DevOps Integration**: Seamless setup for private package feeds with automatic authentication
 
 ## Quick Start
 
@@ -55,6 +56,9 @@ uvve create webapp 3.11
 
 # Activate the environment (with shell integration)
 uvve activate myproject
+
+# Set up Azure DevOps package feed (optional)
+uvve setup-azure --feed-url "https://pkgs.dev.azure.com/myorg/_packaging/myfeed/pypi/simple/"
 
 # List environments
 uvve list
@@ -126,6 +130,8 @@ This **just shows** the activation command. You need to copy and run the output 
 | `uvve status`                   | Show environment health overview                    |
 | `uvve cleanup`                  | Clean up unused environments                        |
 | `uvve edit <name>`              | Edit environment metadata (description, tags)       |
+| `uvve setup-azure`              | Set up Azure DevOps package feed authentication     |
+| `uvve feed-status`              | Show Azure DevOps configuration status              |
 | `uvve shell-integration`        | Install shell integration for direct activation     |
 | `uvve --install-completion`     | Install tab completion for your shell               |
 | `uvve --show-completion`        | Show completion script for manual installation      |
@@ -248,10 +254,207 @@ If auto-install doesn't work, you can manually add completion:
 uvve --show-completion
 
 # Add it to your shell config manually
-uvve --show-completion >> ~/.zshrc      # for zsh
-uvve --show-completion >> ~/.bashrc     # for bash
+# Add it to your shell config manually
 ```
 
+## Azure DevOps Integration
+
+uvve provides seamless integration with Azure DevOps package feeds, allowing you to install private packages alongside public PyPI packages. This integration automatically handles authentication setup and keyring configuration.
+
+### Quick Setup
+
+```bash
+# 1. Activate a uvve environment
+eval "$(uvve activate myproject)"
+
+# 2. Set up Azure DevOps feed (auto-detects active environment)
+uvve setup-azure --feed-url "https://pkgs.dev.azure.com/myorg/_packaging/myfeed/pypi/simple/" --feed-name "private-feed"
+
+# 3. Add environment variables to your shell
+export UV_KEYRING_PROVIDER=subprocess
+export UV_INDEX_PRIVATE_FEED_USERNAME=VssSessionToken
+
+# 4. Authenticate with Azure CLI
+az login
+```
+
+### Features
+
+- 🔧 **Auto-Detection**: Automatically detects active uvve environments
+- 📦 **Keyring Installation**: Installs `keyring` and `artifacts-keyring` into the environment
+- 🌐 **PyPI Preservation**: Ensures PyPI access is maintained alongside private feeds
+- 🔗 **Multiple Feeds**: Support for multiple Azure DevOps feeds in the same environment
+- 📊 **Status Monitoring**: Check configuration status with `uvve feed-status`
+
+### Commands
+
+| Command            | Description                                     |
+| ------------------ | ----------------------------------------------- |
+| `uvve setup-azure` | Set up Azure DevOps package feed authentication |
+| `uvve feed-status` | Show Azure DevOps configuration status          |
+
+### Detailed Setup Process
+
+#### 1. Create and Activate Environment
+
+```bash
+# Create a new environment
+uvve create myproject 3.11 --description "Project with private packages"
+
+# Activate it
+eval "$(uvve activate myproject)"
+```
+
+#### 2. Configure Azure Feed
+
+With an active environment, uvve will automatically install keyring packages into it:
+
+```bash
+uvve setup-azure
+  --feed-url "https://pkgs.dev.azure.com/myorg/_packaging/myfeed/pypi/simple/"
+  --feed-name "private-feed"
+```
+
+Without an active environment, you'll be prompted to choose one:
+
+```bash
+uvve setup-azure
+  --feed-url "https://pkgs.dev.azure.com/myorg/_packaging/myfeed/pypi/simple/"
+  --feed-name "private-feed"
+```
+
+#### 3. Environment Variables
+
+Add the generated environment variables to your shell configuration:
+
+```bash
+# For bash/zsh (~/.bashrc or ~/.zshrc)
+export UV_KEYRING_PROVIDER=subprocess
+export UV_INDEX_PRIVATE_FEED_USERNAME=VssSessionToken
+
+# For fish (~/.config/fish/config.fish)
+set -gx UV_KEYRING_PROVIDER subprocess
+set -gx UV_INDEX_PRIVATE_FEED_USERNAME VssSessionToken
+
+# For PowerShell
+$env:UV_KEYRING_PROVIDER = "subprocess"
+$env:UV_INDEX_PRIVATE_FEED_USERNAME = "VssSessionToken"
+```
+
+#### 4. Azure Authentication
+
+Ensure you're authenticated with Azure CLI:
+
+```bash
+az login
+```
+
+### Configuration
+
+The setup process creates a `uv.toml` configuration file with your feeds:
+
+```toml
+[[index]]
+name = "pypi"
+url = "https://pypi.org/simple/"
+
+[[index]]
+name = "private-feed"
+url = "https://pkgs.dev.azure.com/myorg/_packaging/myfeed/pypi/simple/"
+```
+
+### Status Monitoring
+
+Check your Azure configuration at any time:
+
+```bash
+uvve feed-status
+```
+
+Example output:
+
+```
+Azure DevOps Configuration Status
+
+✅ Config file: /Users/username/.config/uv/uv.toml
+✅ Keyring provider: subprocess
+
+Configured Azure Feeds (2):
+  • pypi: https://pypi.org/simple/
+  • private-feed: https://pkgs.dev.azure.com/myorg/_packaging/myfeed/pypi/simple/
+
+Azure Environment Variables (1):
+  • UV_INDEX_PRIVATE_FEED_USERNAME=VssSessionToken
+```
+
+### Installing Packages
+
+Once configured, you can install packages from both PyPI and your private feed:
+
+```bash
+# Install from PyPI (works as normal)
+uv pip install requests pandas
+
+# Install from private feed (automatically authenticated)
+uv pip install my-private-package
+
+# Install specific version from private feed
+uv pip install my-private-package==1.2.3
+```
+
+### Multiple Azure Feeds
+
+You can configure multiple Azure DevOps feeds:
+
+```bash
+# Add a second feed
+uvve setup-azure
+  --feed-url "https://pkgs.dev.azure.com/myorg/_packaging/anotherfeed/pypi/simple/"
+  --feed-name "second-feed"
+```
+
+Each feed gets its own environment variable:
+
+```bash
+export UV_INDEX_PRIVATE_FEED_USERNAME=VssSessionToken
+export UV_INDEX_SECOND_FEED_USERNAME=VssSessionToken
+```
+
+### Troubleshooting
+
+#### Authentication Issues
+
+```bash
+# Re-authenticate with Azure
+az login
+
+# Check your Azure account
+az account show
+```
+
+#### Configuration Issues
+
+```bash
+# Check Azure status
+uvve feed-status
+
+# Verify environment variables
+echo $UV_KEYRING_PROVIDER
+echo $UV_INDEX_PRIVATE_FEED_USERNAME
+```
+
+#### Package Installation Issues
+
+```bash
+# Check if keyring packages are installed
+uv pip list | grep keyring
+
+# Verify uv configuration
+cat ~/.config/uv/uv.toml
+```
+
+````bash
+uvve --show-completion >> ~/.bashrc # for bash
 **What you get with completion:**
 
 - ✅ Command completion (`uvve <TAB>` shows available commands)
@@ -281,7 +484,7 @@ dependencies = [
 [metadata]
 locked_at = "2023-12-01T12:00:00"
 platform = { system = "Darwin", machine = "arm64" }
-```
+````
 
 ## Development
 
