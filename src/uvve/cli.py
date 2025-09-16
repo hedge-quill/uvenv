@@ -922,6 +922,8 @@ def shell_integration(
         integration_script = activation_manager.generate_shell_integration(shell)
 
         if print_only:
+            # Disable syntax highlighting to ensure plain text output when piping to config files.
+            # This avoids unwanted ANSI color codes or formatting in shell configuration files.
             console.print(integration_script, highlight=False)
             return
 
