@@ -941,10 +941,7 @@ def shell_integration(
             console.print(f"[dim]uvve shell-integration --print >> {config_file}[/dim]")
         elif detected_shell == "fish":
             console.print("\n[cyan]# Add to ~/.config/fish/config.fish[/cyan]")
-            console.print(
-                "[dim]uvve shell-integration --print >> "
-                "~/.config/fish/config.fish[/dim]"
-            )
+            console.print("[dim]uvve shell-integration --print >> ~/.config/fish/config.fish[/dim]")
         elif detected_shell == "powershell":
             console.print("\n[cyan]# Add to your PowerShell profile[/cyan]")
 
