@@ -37,7 +37,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ```bash
 # Install shell integration (one-time setup)
-uvve shell-integration >> ~/.zshrc && source ~/.zshrc
+uvve shell-integration --print >> ~/.zshrc && source ~/.zshrc
 
 # Install a Python version
 uvve python install 3.11
@@ -189,8 +189,8 @@ Install uvve's shell integration to make `uvve activate` work directly:
 
 ````bash
 # One-time setup:
-uvve shell-integration >> ~/.zshrc  # for zsh
-uvve shell-integration >> ~/.bashrc # for bash
+uvve shell-integration --print >> ~/.zshrc  # for zsh
+uvve shell-integration --print >> ~/.bashrc # for bash
 
 **After installation, you can use:**
 
