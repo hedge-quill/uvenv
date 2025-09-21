@@ -95,7 +95,7 @@ uvve status
 
 This displays:
 
-- Utility status for each environment (🟢 Healthy, 🟡 Warning, 🔴 Needs attention)
+- Utility status for each environment (🟢 Active, 🟡 Warning, 🔴 Needs attention)
 - Usage patterns and recommendations
 - Summary of environments needing cleanup
 
