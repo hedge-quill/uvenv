@@ -108,6 +108,61 @@ uvve/
 └── uvve.meta.json         # Metadata (JSON)
 ```
 
+### Storage Architecture
+
+**Decision**: Store environments in `~/.uvve/<name>/`
+
+**Rationale**:
+
+- Centralized location for easy management
+- Follows convention of similar tools (pyenv, rbenv)
+- Avoids project-specific .venv folders that can be accidentally committed
+
+## Rich Metadata and Analytics
+
+uvve includes a comprehensive metadata system that tracks environment usage patterns, descriptions, tags, and other information to enable powerful analytics and cleanup automation features.
+
+### Metadata Schema
+
+Each environment stores rich metadata in `uvve.meta.json`:
+
+```json
+{
+  "name": "myproject",
+  "description": "Web API project for customer management",
+  "tags": ["web", "api", "production"],
+  "python_version": "3.11.5",
+  "created_at": "2024-01-15T10:30:00Z",
+  "last_used": "2024-01-20T14:22:15Z",
+  "usage_count": 42,
+  "active": false,
+  "project_root": "/Users/alice/projects/web-api",
+  "size_bytes": 157286400
+}
+```
+
+### Metadata Fields
+
+- **name**: Environment name
+- **description**: User-provided description
+- **tags**: List of tags for categorization
+- **python_version**: Python version used
+- **created_at**: Creation timestamp (ISO 8601)
+- **last_used**: Last activation timestamp (ISO 8601)
+- **usage_count**: Number of times activated
+- **active**: Whether currently active (for future use)
+- **project_root**: Associated project directory
+- **size_bytes**: Environment size in bytes (calculated on demand)
+
+### Analytics Features
+
+uvve tracks rich metadata for each environment including:
+
+- **Usage Statistics**: Activation count, last used date, usage frequency
+- **Descriptions and Tags**: Organize environments with custom descriptions and tags
+- **Project Linking**: Associate environments with project directories
+- **Size Tracking**: Monitor disk usage for cleanup decisions
+
 ### Lockfile Schema
 
 ```toml

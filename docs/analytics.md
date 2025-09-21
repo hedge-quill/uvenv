@@ -1,71 +1,12 @@
-# Rich Metadata and Usage Analytics
+# Usage Analytics and Environment Insights
 
-This document describes the enhanced metadata system and usage analytics features added to uvve.
+This document describes the analytics and usage tracking features in uvve that help you understand environment usage patterns and maintain clean, organized environments.
 
 ## Overview
 
-uvve now includes a comprehensive metadata system that tracks environment usage patterns, descriptions, tags, and other information. This enables powerful analytics and cleanup automation features.
+uvve's analytics system provides insights into how your environments are used, helping you identify unused environments, track usage patterns, and make informed decisions about environment cleanup and organization.
 
-## Rich Metadata Features
-
-### Enhanced Environment Creation
-
-When creating environments, you can now provide rich metadata directly:
-
-```bash
-# Create with description and tags
-uvve create myapi 3.11 --description "Customer API service" --add-tag production --add-tag api
-
-# Interactive mode when no metadata provided
-uvve create webapp 3.11
-# Prompts for:
-# Description (optional, press Enter to skip): My web application
-# Add tags (optional):
-# Press Enter after each tag, or just press Enter to finish
-# Tag: web
-# Tag: frontend
-# Tag: [Enter to finish]
-```
-
-**Command Options:**
-
-- `--description`, `-d`: Set environment description
-- `--add-tag`, `-t`: Add a tag (can be used multiple times)
-- Interactive prompts appear automatically when no metadata is provided
-
-### Enhanced Metadata Schema
-
-Each environment now stores rich metadata in `uvve.meta.json`:
-
-```json
-{
-  "name": "myproject",
-  "description": "Web API project for customer management",
-  "tags": ["web", "api", "production"],
-  "python_version": "3.11.5",
-  "created_at": "2024-01-15T10:30:00Z",
-  "last_used": "2024-01-20T14:22:15Z",
-  "usage_count": 42,
-  "active": false,
-  "project_root": "/Users/alice/projects/web-api",
-  "size_bytes": 157286400
-}
-```
-
-### Metadata Fields
-
-- **name**: Environment name
-- **description**: User-provided description
-- **tags**: List of tags for categorization
-- **python_version**: Python version used
-- **created_at**: Creation timestamp (ISO 8601)
-- **last_used**: Last activation timestamp (ISO 8601)
-- **usage_count**: Number of times activated
-- **active**: Whether currently active (for future use)
-- **project_root**: Associated project directory
-- **size_bytes**: Environment size in bytes (calculated on demand)
-
-## Usage Analytics Commands
+## Analytics Commands
 
 ### `uvve analytics [name]`
 
@@ -81,9 +22,48 @@ uvve analytics myproject
 uvve analytics
 ```
 
-**Options:**
+**Sample Output (Specific Environment):**
 
-- `--detailed`, `-d`: Show detailed analytics (future feature)
+```
+Environment Analytics: myproject
+
+📊 Usage Statistics
+  Created:        2024-01-15 10:30:00
+  Last Used:      2024-01-20 14:22:15 (5 days ago)
+  Usage Count:    42 activations
+  Frequency:      High (8.4 uses/day)
+
+📝 Metadata
+  Description:    Web API project for customer management
+  Tags:          web, api, production
+  Python:        3.11.5
+  Size:          150.0 MB
+
+🔍 Health Status
+  Status:        🟢 Healthy
+  Recommendation: Keep - actively used environment
+```
+
+**Sample Output (All Environments):**
+
+```
+Environment Analytics Summary
+
+📈 Usage Overview
+  Total Environments:     8
+  Active Environments:    5
+  Inactive (30+ days):    2
+  Storage Used:          1.2 GB
+
+🏆 Most Used Environments
+  myapi          127 uses (last: 2 hours ago)
+  webapp         89 uses  (last: 1 day ago)
+  dataproj       45 uses  (last: 3 days ago)
+
+⚠️  Cleanup Candidates
+  oldproj        0 uses   (last: 45 days ago) - 180 MB
+  testenv        2 uses   (last: 60 days ago) - 95 MB
+```
 
 ### `uvve status`
 
@@ -93,15 +73,38 @@ Show environment utility overview with quick insights.
 uvve status
 ```
 
-This displays:
+**Sample Output:**
 
-- Utility status for each environment (🟢 Active, 🟡 Warning, 🔴 Needs attention)
-- Usage patterns and recommendations
-- Summary of environments needing cleanup
+```
+Environment Health Status
+
+🟢 Healthy (5)
+  myapi, webapp, dataproj, mlmodel, scripts
+
+🟡 Warning (1)
+  oldproj - Not used in 45 days (180 MB)
+
+🔴 Attention Needed (2)
+  testenv - Not used in 60 days (95 MB)
+  broken  - Missing Python interpreter
+
+💡 Recommendations
+  • Run 'uvve cleanup --dry-run' to see cleanup options
+  • Consider archiving unused environments
+  • Total recoverable space: 275 MB
+```
 
 ### `uvve cleanup`
 
 Clean up unused environments automatically.
+
+## Environment Cleanup
+
+The cleanup system helps you maintain a clean environment directory by automatically identifying and removing unused environments.
+
+### `uvve cleanup`
+
+Automatically clean up unused environments based on usage patterns.
 
 ```bash
 # Preview what would be removed
@@ -130,7 +133,7 @@ uvve cleanup --force
 
 ### `uvve edit <name>`
 
-Edit environment metadata.
+Edit environment metadata to improve organization and analytics.
 
 ```bash
 # Set description
@@ -156,7 +159,7 @@ uvve edit myproject --project-root ~/projects/web-api
 
 ### Enhanced `uvve list`
 
-The list command now supports usage information and sorting.
+The list command supports usage information and sorting.
 
 ```bash
 # Show basic list
@@ -176,20 +179,7 @@ uvve list --usage --sort-by last_used # Most recently used first
 - `--usage`, `-u`: Show usage statistics
 - `--sort-by`: Sort by name, usage, size, or last_used
 
-## Automatic Usage Tracking
-
-Usage statistics are automatically updated when you activate environments:
-
-```bash
-# This automatically updates last_used and increments usage_count
-uvve activate myproject
-```
-
-The system tracks:
-
-- **Last used timestamp**: Updated on each activation
-- **Usage count**: Incremented on each activation
-- **Usage frequency**: Calculated as uses per day since creation
+## Usage Insights
 
 ## Analytics Insights
 
@@ -201,7 +191,7 @@ The system automatically categorizes environments:
 - 🟡 **Warning**: Low usage (≤5 times) or unused 30-90 days
 - 🔴 **Needs Attention**: Never used or unused 90+ days
 
-### Usage Patterns
+### Analytics Metrics
 
 Analytics include derived statistics:
 
@@ -290,33 +280,16 @@ Environment Utility Overview
 
 ## Best Practices
 
-### Environment Creation
+### Tagging Strategy
 
-```bash
-# Production environments
-uvve create prod-api 3.11 -d "Production API server" -t production -t api -t critical
-
-# Development environments
-uvve create dev-webapp 3.11 -d "Development web app" -t development -t web
-
-# Experimental environments
-uvve create ml-experiment 3.11 -d "Testing new ML model" -t experiment -t ml
-
-# Quick environments (interactive mode)
-uvve create temp-env 3.11
-# Just press Enter to skip description and tags for temporary work
-```
-
-### Organizing with Tags
-
-Common tagging strategies:
+Common tagging approaches:
 
 - **Environment type**: `production`, `development`, `testing`, `experiment`
 - **Project type**: `web`, `api`, `ml`, `data`, `cli`
 - **Technology**: `django`, `flask`, `pytorch`, `pandas`
 - **Criticality**: `critical`, `important`, `optional`
 
-### Workflow Integration
+### Maintenance Workflow
 
 ```bash
 # Create project environment with metadata
@@ -333,18 +306,10 @@ uvve analytics customer-api
 uvve status
 
 # Clean up unused environments quarterly
-uvve cleanup --older-than 90 --interactive
+uvve cleanup --unused-for 90 --interactive
 ```
 
-## Configuration
-
-The analytics system uses sensible defaults but can be customized:
-
-- **Unused threshold**: 30 days (configurable via `--unused-for`)
-- **Low usage threshold**: 5 total uses (configurable via `--low-usage`)
-- **Size calculation**: Includes all files in environment directory
-
-## Best Practices
+### Organization Tips
 
 1. **Set descriptions**: Use meaningful descriptions for better organization
 2. **Use tags**: Tag environments by project type, status, or purpose
@@ -352,12 +317,50 @@ The analytics system uses sensible defaults but can be customized:
 4. **Monitor usage**: Check analytics to understand your workflow patterns
 5. **Set project roots**: Link environments to their source code directories
 
-## Future Enhancements
+## Example Output
 
-Planned features include:
+### Analytics Summary
 
-- **Usage trends**: Historical usage patterns and graphs
-- **Team analytics**: Share usage statistics across development teams
-- **Integration hooks**: Automatic project linking via git repositories
-- **Custom rules**: User-defined cleanup and categorization rules
-- **Export functionality**: Export analytics data for external analysis
+```bash
+$ uvve analytics
+
+Environment Analytics Summary
+
+📈 Usage Overview
+  Total Environments:     8
+  Active Environments:    5
+  Inactive (30+ days):    2
+  Storage Used:          1.2 GB
+
+🏆 Most Used Environments
+  myapi          127 uses (last: 2 hours ago)
+  webapp         89 uses  (last: 1 day ago)
+  dataproj       45 uses  (last: 3 days ago)
+
+⚠️  Cleanup Candidates
+  oldproj        0 uses   (last: 45 days ago) - 180 MB
+  testenv        2 uses   (last: 60 days ago) - 95 MB
+```
+
+### Status Overview
+
+```bash
+$ uvve status
+
+Environment Health Status
+
+🟢 Healthy (5)
+  myapi, webapp, dataproj, mlmodel, scripts
+
+🟡 Warning (1)
+  oldproj - Not used in 45 days (180 MB)
+
+🔴 Attention Needed (2)
+  testenv - Not used in 60 days (95 MB)
+  broken  - Missing Python interpreter
+
+💡 Recommendations
+  • Run 'uvve cleanup --dry-run' to see cleanup options
+  • Consider archiving unused environments
+  • Total recoverable space: 275 MB
+```
