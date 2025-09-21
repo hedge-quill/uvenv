@@ -33,7 +33,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ```bash
 # Install shell integration (one-time setup)
-uvve shell-integration >> ~/.zshrc && source ~/.zshrc
+uvve shell-integration --print >> ~/.zshrc && source ~/.zshrc
 
 # Install a Python version
 uvve python install 3.11

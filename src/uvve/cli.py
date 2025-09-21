@@ -906,18 +906,25 @@ def shell_integration(
     print_only: bool = typer.Option(
         False,
         "--print",
-        help="Print integration script instead of installation instructions",
+        help="Output only the shell script (for piping to config files)",
     ),
 ) -> None:
-    """Install shell integration for uvve.
+    """Generate shell integration for uvve.
 
     This enables 'uvve activate <env>' to work directly without eval.
+
+    Examples:
+      uvve shell-integration                    # Show instructions
+      uvve shell-integration --print           # Output script only
+      uvve shell-integration --print >> ~/.zshrc  # Install to zsh
     """
     try:
         integration_script = activation_manager.generate_shell_integration(shell)
 
         if print_only:
-            console.print(integration_script)
+            # Disable syntax highlighting to ensure plain text output when piping to config files.
+            # This avoids unwanted ANSI color codes or formatting in shell configuration files.
+            console.print(integration_script, highlight=False)
             return
 
         detected_shell = activation_manager._detect_shell() if shell is None else shell
@@ -931,8 +938,10 @@ def shell_integration(
         if detected_shell in ("bash", "zsh"):
             config_file = "~/.bashrc" if detected_shell == "bash" else "~/.zshrc"
             console.print(f"\n[cyan]# Add to {config_file}[/cyan]")
+            console.print(f"[dim]uvve shell-integration --print >> {config_file}[/dim]")
         elif detected_shell == "fish":
             console.print("\n[cyan]# Add to ~/.config/fish/config.fish[/cyan]")
+            console.print("[dim]uvve shell-integration --print >> ~/.config/fish/config.fish[/dim]")
         elif detected_shell == "powershell":
             console.print("\n[cyan]# Add to your PowerShell profile[/cyan]")
 

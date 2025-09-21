@@ -678,7 +678,7 @@ uvve python list
 
 ```bash
 # 0. Optional: Install shell integration (one-time setup)
-uvve shell-integration >> ~/.zshrc && source ~/.zshrc
+uvve shell-integration --print >> ~/.zshrc && source ~/.zshrc
 
 # 1. Install the Python version you need
 uvve python install 3.12.1
