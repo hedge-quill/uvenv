@@ -427,11 +427,11 @@ def thaw(
 
 @app.command()
 def status() -> None:
-    """Show environment health overview."""
+    """Show environment utility overview."""
     try:
         summary = analytics_manager.get_usage_summary()
 
-        console.print(f"\n[bold cyan]Environment Health Overview[/bold cyan]")
+        console.print(f"\n[bold cyan]Environment Utility Overview[/bold cyan]")
 
         # Quick stats
         total = summary["total_environments"]
@@ -441,16 +441,16 @@ def status() -> None:
             console.print("[yellow]No environments found[/yellow]")
             return
 
-        # Health summary
+        # Utility summary
         health_table = Table()
         health_table.add_column("Environment", style="cyan")
         health_table.add_column("Last Used", style="white")
         health_table.add_column("Usage Count", style="green")
         health_table.add_column("Size", style="blue")
-        health_table.add_column("Health", style="magenta")
+        health_table.add_column("Utility", style="magenta")
 
         for env in summary["environments"]:
-            # Health status
+            # Utility status
             usage_count = env["usage_count"]
             days_since_use = env["days_since_use"]
 
@@ -941,7 +941,9 @@ def shell_integration(
             console.print(f"[dim]uvve shell-integration --print >> {config_file}[/dim]")
         elif detected_shell == "fish":
             console.print("\n[cyan]# Add to ~/.config/fish/config.fish[/cyan]")
-            console.print("[dim]uvve shell-integration --print >> ~/.config/fish/config.fish[/dim]")
+            console.print(
+                "[dim]uvve shell-integration --print >> ~/.config/fish/config.fish[/dim]"
+            )
         elif detected_shell == "powershell":
             console.print("\n[cyan]# Add to your PowerShell profile[/cyan]")
 

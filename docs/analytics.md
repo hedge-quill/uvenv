@@ -67,7 +67,7 @@ Environment Analytics Summary
 
 ### `uvve status`
 
-Show environment health overview with quick insights and recommendations.
+Show environment utility overview with quick insights.
 
 ```bash
 uvve status
@@ -181,7 +181,9 @@ uvve list --usage --sort-by last_used # Most recently used first
 
 ## Usage Insights
 
-### Environment Health Categories
+## Analytics Insights
+
+### Environment Utility Categories
 
 The system automatically categorizes environments:
 
@@ -206,6 +208,75 @@ The system identifies environments for potential cleanup:
 - **Stale**: Not used for 30+ days (configurable)
 - **Low usage**: Used ≤5 times total
 - **Large unused**: High disk usage with low activity
+
+## Examples
+
+### Typical Workflow
+
+```bash
+# Create and set up environment
+uvve create myproject 3.11
+uvve edit myproject --description "Customer API service"
+uvve edit myproject --add-tag "api" --add-tag "production"
+uvve edit myproject --project-root ~/projects/customer-api
+
+# Use environment (automatically tracked)
+uvve activate myproject
+
+# Review analytics
+uvve analytics myproject
+uvve status
+
+# Periodic cleanup
+uvve cleanup --dry-run
+uvve cleanup --unused-for 60 --interactive
+```
+
+### Analytics Output Example
+
+```bash
+$ uvve analytics myproject
+
+Analytics for 'myproject'
+
+┌─────────────────┬────────────────────────────────────┐
+│ Property        │ Value                              │
+├─────────────────┼────────────────────────────────────┤
+│ Name            │ myproject                          │
+│ Python Version  │ 3.11.5                             │
+│ Description     │ Customer API service               │
+│ Tags            │ api, production                    │
+│ Size            │ 245.7 MB                           │
+└─────────────────┴────────────────────────────────────┘
+
+┌──────────────────┬─────────────────┐
+│ Metric           │ Value           │
+├──────────────────┼─────────────────┤
+│ Usage Count      │ 47              │
+│ Last Used        │ 2024-01-20T...  │
+│ Age (days)       │ 15              │
+│ Days Since Use   │ 2               │
+│ Usage Frequency  │ 3.133/day       │
+└──────────────────┴─────────────────┘
+```
+
+### Status Output Example
+
+```bash
+$ uvve status
+
+Environment Utility Overview
+
+┌─────────────┬─────────────┬─────────────┬────────┬─────────────────────┐
+│ Environment │ Last Used   │ Usage Count │ Size   │ Utility             │
+├─────────────┼─────────────┼─────────────┼────────┼─────────────────────┤
+│ myproject   │ 2d ago      │ 47          │ 246MB  │ 🟢 Healthy          │
+│ experiment  │ 45d ago     │ 3           │ 150MB  │ 🟡 Unused (30+ days) │
+│ old-test    │ Never       │ 0           │ 80MB   │ 🔴 Never used       │
+└─────────────┴─────────────┴─────────────┴────────┴─────────────────────┘
+
+💡 Found 2 unused environment(s). Consider running `uvve cleanup --dry-run` to review.
+```
 
 ## Best Practices
 

@@ -88,6 +88,13 @@ uvve thaw myproject
 # View environment analytics
 uvve analytics myproject
 
+# Check utility status of all environments
+uvve status
+
+# Find and clean unused environments
+uvve cleanup --dry-run
+uvve cleanup --unused-for 60 --interactive
+
 # Edit environment metadata
 uvve edit myproject --description "My web API" --add-tag "production"
 
