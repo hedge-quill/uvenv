@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "uvve"
-version = "1.1.0"
+version = "1.1.1"
 description = "A CLI tool for managing Python virtual environments using uv"
 readme = "README.md"
 requires-python = ">=3.10"

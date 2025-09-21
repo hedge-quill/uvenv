@@ -69,7 +69,7 @@ uvve lock myproject
 # View environment analytics
 uvve analytics myproject
 
-# Check environment health
+# Check environment utility
 uvve status
 
 # Clean up unused environments
@@ -127,7 +127,7 @@ This **just shows** the activation command. You need to copy and run the output 
 | `uvve lock <name>`              | Generate a lockfile for the environment             |
 | `uvve thaw <name>`              | Rebuild environment from lockfile                   |
 | `uvve analytics [name]`         | Show usage analytics and insights                   |
-| `uvve status`                   | Show environment health overview                    |
+| `uvve status`                   | Show environment utility overview                   |
 | `uvve cleanup`                  | Clean up unused environments                        |
 | `uvve edit <name>`              | Edit environment metadata (description, tags)       |
 | `uvve setup-azure`              | Set up Azure DevOps package feed authentication     |
@@ -166,7 +166,7 @@ uvve tracks rich metadata for each environment including:
 # View detailed analytics for an environment
 uvve analytics myproject
 
-# Check health status of all environments
+# Check utility status of all environments
 uvve status
 
 # Find and clean unused environments

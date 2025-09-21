@@ -87,7 +87,7 @@ uvve analytics
 
 ### `uvve status`
 
-Show environment health overview with quick insights.
+Show environment utility overview with quick insights.
 
 ```bash
 uvve status
@@ -95,7 +95,7 @@ uvve status
 
 This displays:
 
-- Health status for each environment (🟢 Healthy, 🟡 Warning, 🔴 Needs attention)
+- Utility status for each environment (🟢 Healthy, 🟡 Warning, 🔴 Needs attention)
 - Usage patterns and recommendations
 - Summary of environments needing cleanup
 
@@ -193,7 +193,7 @@ The system tracks:
 
 ## Analytics Insights
 
-### Environment Health Status
+### Environment Utility Categories
 
 The system automatically categorizes environments:
 
@@ -275,10 +275,10 @@ Analytics for 'myproject'
 ```bash
 $ uvve status
 
-Environment Health Overview
+Environment Utility Overview
 
 ┌─────────────┬─────────────┬─────────────┬────────┬─────────────────────┐
-│ Environment │ Last Used   │ Usage Count │ Size   │ Health              │
+│ Environment │ Last Used   │ Usage Count │ Size   │ Utility             │
 ├─────────────┼─────────────┼─────────────┼────────┼─────────────────────┤
 │ myproject   │ 2d ago      │ 47          │ 246MB  │ 🟢 Healthy          │
 │ experiment  │ 45d ago     │ 3           │ 150MB  │ 🟡 Unused (30+ days) │
