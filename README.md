@@ -1,6 +1,6 @@
 # uvve
 
-[![CI](https://github.com//hedge-quill/uvve/workflows/PyPI%20Publish/badge.svg)](https://github.com/hedge-quill/uvve/actions)
+[![CI](https://github.com/hedge-quill/uvve/workflows/PyPI%20Publish/badge.svg)](https://github.com/hedge-quill/uvve/actions)
 [![PyPI version](https://badge.fury.io/py/uvve.svg)](https://badge.fury.io/py/uvve)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 
