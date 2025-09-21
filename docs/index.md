@@ -1,94 +1,18 @@
-# uvve Documentation
+# uvve User Guide
 
 ## 📚 Documentation Navigation
 
 - **[User Guide](index.md)** - Complete usage documentation (this page)
-- **[Rich Metadata & Analytics](analytics.md)** - Usage tracking and environment analytics
+- **[Analytics & Insights](analytics.md)** - Usage tracking and environment analytics
 - **[Design Principles](principles.md)** - Core principles and architecture decisions
 - **[Roadmap](roadmap.md)** - Future development plans and phases
 - **[Design Document](design.md)** - Technical implementation details
 
 ## Overview
 
-`uvve` is a CLI tool for managing Python virtual environments using [uv](https://github.com/astral-sh/uv). It provides a simple interface similar to `pyenv-virtualenv` but leverages the speed and efficiency of `uv`.
+This guide provides comprehensive documentation for `uvve`, a CLI tool for managing Python virtual environments using [uv](https://github.com/astral-sh/uv). For a quick overview and installation instructions, see the main [README](../README.md).
 
-## Installation
-
-### Prerequisites
-
-- Python 3.10+
-- [uv](https://github.com/astral-sh/uv) installed and available in PATH
-
-### Install uvve
-
-```bash
-pip install uvve
-```
-
-## Quick Start
-
-### 1. Install shell integration (optional but recommended)
-
-```bash
-# Install shell integration for direct activation
-uvve shell-integration >> ~/.zshrc  # for zsh
-uvve shell-integration >> ~/.bashrc # for bash
-
-# Restart your shell or source the config
-source ~/.zshrc
-```
-
-### 2. Install a Python version
-
-```bash
-uvve python install 3.11
-```
-
-### 3. List available Python versions
-
-```bash
-uvve python list
-```
-
-### 4. Create a virtual environment
-
-```bash
-uvve create myproject 3.11
-```
-
-### 5. Activate the environment
-
-**With shell integration (recommended):**
-
-```bash
-uvve activate myproject
-```
-
-**Without shell integration:**
-
-```bash
-eval "$(uvve activate myproject)"
-```
-
-### 6. List environments
-
-```bash
-uvve list
-```
-
-### 7. Create a lockfile
-
-```bash
-uvve lock myproject
-```
-
-### 8. Remove an environment
-
-```bash
-uvve remove myproject
-```
-
-## Commands
+## Detailed Command Reference
 
 ### Python Version Management
 
@@ -97,6 +21,428 @@ uvve remove myproject
 Install a Python version using uv.
 
 **Arguments:**
+
+- `version`: Python version to install (e.g., "3.11", "3.11.5")
+
+**Examples:**
+
+```bash
+uvve python install 3.11.0
+uvve python install 3.12        # Latest 3.12.x
+```
+
+#### `uvve python list`
+
+List available and installed Python versions with detailed status information.
+
+**Output:**
+
+- ✓ Installed versions are marked with a checkmark
+- Available versions show as "Available"
+- Shows installation paths for installed versions
+
+### Environment Management
+
+#### `uvve create <name> <python_version> [OPTIONS]`
+
+Create a new virtual environment with optional metadata.
+
+**Arguments:**
+
+- `name`: Name of the virtual environment
+- `python_version`: Python version for the environment
+
+**Options:**
+
+- `--description`, `-d`: Set environment description
+- `--add-tag`, `-t`: Add a tag (can be used multiple times)
+
+**Examples:**
+
+```bash
+# Basic environment
+uvve create myproject 3.11
+
+# With metadata
+uvve create myapi 3.11 --description "Customer API" --add-tag production --add-tag api
+
+# Interactive metadata (prompts for description and tags)
+uvve create webapp 3.11
+```
+
+#### Environment Activation
+
+**Method 1: Shell Integration (Recommended)**
+
+```bash
+# Install shell integration (one-time setup)
+uvve shell-integration >> ~/.zshrc && source ~/.zshrc
+
+# Then simply:
+uvve activate myproject
+```
+
+**Method 2: Direct Evaluation**
+
+```bash
+eval "$(uvve activate myproject)"
+```
+
+**Why prefer shell integration?**
+
+- ✅ Simpler command (no `eval` needed)
+- ✅ More intuitive for users
+- ✅ Consistent with other environment managers
+- ✅ One-time setup, lifetime benefit
+
+**When to use `eval` method:**
+
+- ⚙️ Automation scripts and CI/CD
+- ⚙️ One-off usage without permanent setup
+- ⚙️ Shell functions where integration isn't available
+
+### Lockfile Management
+
+#### `uvve lock <name>`
+
+Generate a comprehensive lockfile for the environment.
+
+Creates a `uvve.lock` file containing:
+
+- Environment name and Python version
+- List of installed packages with exact versions
+- Platform information for compatibility checking
+- Generation timestamp for reproducibility auditing
+
+#### `uvve thaw <name>`
+
+Rebuild environment from lockfile with exact package versions.
+
+**Process:**
+
+1. Verifies Python version availability
+2. Creates new environment
+3. Installs exact package versions from lockfile
+4. Restores metadata
+
+### Enhanced Environment Management
+
+#### `uvve list [OPTIONS]`
+
+List environments with optional usage statistics and sorting.
+
+**Options:**
+
+- `--usage`, `-u`: Show usage statistics
+- `--sort-by`: Sort by name, usage, size, or last_used
+
+**Examples:**
+
+```bash
+uvve list                           # Basic list
+uvve list --usage                   # With usage stats
+uvve list --usage --sort-by usage   # Most used first
+```
+
+#### `uvve edit <name> [OPTIONS]`
+
+Edit environment metadata after creation.
+
+**Options:**
+
+- `--description`, `-d`: Set environment description
+- `--add-tag`: Add a tag to the environment
+- `--remove-tag`: Remove a tag from the environment
+- `--project-root`: Set project root directory
+
+**Examples:**
+
+```bash
+uvve edit myproject --description "My web API project"
+uvve edit myproject --add-tag "production"
+uvve edit myproject --remove-tag "development"
+```
+
+### Analytics and Cleanup
+
+#### `uvve analytics [name]`
+
+Show detailed analytics for specific environment or summary for all environments.
+
+**Examples:**
+
+```bash
+uvve analytics myproject    # Specific environment
+uvve analytics             # All environments summary
+```
+
+#### `uvve status`
+
+Show environment health overview with recommendations.
+
+Displays:
+
+- Health status (🟢 Healthy, 🟡 Warning, 🔴 Needs attention)
+- Usage patterns and recommendations
+- Summary of environments needing cleanup
+
+#### `uvve cleanup [OPTIONS]`
+
+Automatically clean up unused environments.
+
+**Options:**
+
+- `--dry-run`: Show what would be removed without removing
+- `--unused-for DAYS`: Days since last use threshold (default: 30)
+- `--low-usage`: Include environments with ≤5 total uses
+- `--interactive`, `-i`: Ask before removing each environment
+- `--force`, `-f`: Remove without confirmation
+
+### Shell Integration
+
+#### `uvve shell-integration [OPTIONS]`
+
+Generate and install shell integration for automatic activation.
+
+**Options:**
+
+- `--shell`: Target shell (bash, zsh, fish, powershell)
+- `--print`: Print integration script instead of installation instructions
+
+**Examples:**
+
+```bash
+# Show installation instructions
+uvve shell-integration
+
+# Install directly to shell config
+uvve shell-integration >> ~/.zshrc
+
+# Generate for specific shell
+uvve shell-integration --shell bash
+```
+
+## Complete Workflow Examples
+
+### New Project Setup
+
+```bash
+# 1. Install shell integration (one-time setup)
+uvve shell-integration >> ~/.zshrc && source ~/.zshrc
+
+# 2. Install Python version
+uvve python install 3.12.1
+
+# 3. Create environment with metadata
+uvve create myapi 3.12.1 \
+  --description "Customer management API" \
+  --add-tag production \
+  --add-tag api
+
+# 4. Activate environment
+uvve activate myapi
+
+# 5. Install packages
+pip install fastapi uvicorn pydantic
+
+# 6. Create lockfile for reproducibility
+uvve lock myapi
+
+# 7. Set project root for organization
+uvve edit myapi --project-root ~/projects/customer-api
+```
+
+### Environment Maintenance
+
+```bash
+# Check environment health
+uvve status
+
+# View detailed analytics
+uvve analytics myapi
+
+# List environments with usage stats
+uvve list --usage --sort-by last_used
+
+# Clean up unused environments
+uvve cleanup --unused-for 60 --interactive
+```
+
+### Sharing and Reproducibility
+
+```bash
+# Developer A creates environment and lockfile
+uvve create sharedproject 3.11
+# ... install packages ...
+uvve lock sharedproject
+
+# Developer B recreates exact environment
+uvve thaw sharedproject
+```
+
+## Configuration and Storage
+
+### Environment Storage Structure
+
+```
+~/.uvve/
+├── myproject/
+│   ├── bin/activate           # Activation script
+│   ├── lib/python3.11/        # Python packages
+│   ├── uvve.lock             # Lockfile (TOML format)
+│   └── uvve.meta.json        # Metadata (usage, tags, description)
+└── another-env/
+    └── ...
+```
+
+### Lockfile Format
+
+TOML format with comprehensive metadata:
+
+```toml
+[uvve]
+version = "1.0.1"
+generated = "2025-09-21T12:00:00"
+
+[environment]
+name = "myproject"
+python_version = "3.11.5"
+
+dependencies = [
+    "requests==2.31.0",
+    "click==8.1.7",
+    # ... other packages
+]
+
+[metadata]
+locked_at = "2025-09-21T12:00:00"
+
+[metadata.platform]
+system = "Darwin"
+machine = "arm64"
+python_implementation = "CPython"
+```
+
+## Best Practices
+
+### Environment Organization
+
+1. **Use descriptive names**: `customer-api` instead of `project1`
+2. **Add meaningful descriptions**: Help identify project purpose
+3. **Tag strategically**: Use tags for filtering and organization
+4. **Set project roots**: Link environments to source code directories
+
+### Reproducibility
+
+1. **Always create lockfiles**: Ensure consistent environments
+2. **Use specific Python versions**: Avoid compatibility issues
+3. **Regular cleanup**: Maintain clean environment directory
+4. **Document dependencies**: Use requirements files alongside lockfiles
+
+### Tagging Strategy
+
+Common patterns:
+
+- **Environment type**: `production`, `development`, `testing`
+- **Project type**: `web`, `api`, `ml`, `data`, `cli`
+- **Technology stack**: `django`, `flask`, `pytorch`, `pandas`
+- **Criticality**: `critical`, `important`, `experimental`
+
+## Troubleshooting
+
+### Common Issues
+
+**uv not found:**
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**Environment not activating:**
+
+```bash
+# Verify environment exists
+uvve list
+
+# Check activation command output
+uvve activate myproject
+
+# Recreate if corrupted
+uvve remove myproject
+uvve create myproject 3.11
+```
+
+**Lockfile restoration fails:**
+
+```bash
+# Check Python version availability
+uvve python list
+
+# Install required Python version
+uvve python install 3.11
+
+# Retry thaw operation
+uvve thaw myproject
+```
+
+**Permission errors:**
+
+```bash
+# Ensure uvve directory is writable
+chmod 755 ~/.uvve
+
+# Check individual environment permissions
+ls -la ~/.uvve/
+```
+
+## Advanced Features
+
+### Shell Completion
+
+Enable tab completion for commands and environment names:
+
+```bash
+# Auto-install for current shell
+uvve --install-completion
+
+# Manual installation
+uvve --show-completion >> ~/.zshrc
+```
+
+### Environment Health Monitoring
+
+Regular maintenance commands:
+
+```bash
+# Weekly: Check environment status
+uvve status
+
+# Monthly: Review usage analytics
+uvve analytics
+
+# Quarterly: Clean unused environments
+uvve cleanup --unused-for 90 --interactive
+```
+
+### Integration with Development Tools
+
+#### VS Code Integration
+
+```bash
+# Set Python interpreter to uvve environment
+# Command Palette: Python: Select Interpreter
+# Choose: ~/.uvve/myproject/bin/python
+```
+
+#### Git Integration
+
+```bash
+# Add to .gitignore
+echo ".venv" >> .gitignore
+echo "uvve.lock" >> .gitignore  # Optional: commit for reproducibility
+```
+
+For more technical details about uvve's architecture and design decisions, see the [Design Document](design.md).
 
 - `version`: Python version to install (e.g., "3.11", "3.11.5")
 
@@ -151,7 +497,7 @@ uvve create myproject 3.11
 
 #### `uvve activate <name>`
 
-Print shell activation snippet for the environment.
+Activate the environment (behavior depends on shell integration setup).
 
 **Arguments:**
 
@@ -159,9 +505,17 @@ Print shell activation snippet for the environment.
 
 **How it works:**
 
-The `uvve activate` command doesn't directly activate the environment. Instead, it outputs the shell command needed to activate it. You have two options:
+**Option 1: With Shell Integration (Recommended)**
 
-**Option 1: Use with `eval` (Recommended)**
+```bash
+# One-time setup:
+uvve shell-integration >> ~/.zshrc && source ~/.zshrc
+
+# Then activate directly:
+uvve activate myproject
+```
+
+**Option 2: With eval (without shell integration)**
 
 ```bash
 eval "$(uvve activate myproject)"
@@ -420,9 +774,27 @@ python_implementation = "CPython"
 
 ## Shell Integration
 
-### Bash/Zsh
+### Built-in Shell Integration (Recommended)
 
-Add to your `.bashrc` or `.zshrc`:
+uvve provides built-in shell integration that makes activation seamless:
+
+```bash
+# One-time setup for your shell:
+uvve shell-integration >> ~/.zshrc     # for zsh
+uvve shell-integration >> ~/.bashrc    # for bash
+
+# Restart your shell or source the config
+source ~/.zshrc
+
+# Now you can activate directly:
+uvve activate myproject
+```
+
+### Manual Shell Functions (Alternative)
+
+If you prefer custom functions, add to your shell config:
+
+**Bash/Zsh:**
 
 ```bash
 # Function to activate uvve environments
@@ -435,9 +807,7 @@ uvactivate() {
 }
 ```
 
-### Fish
-
-Add to your Fish config:
+**Fish:**
 
 ```fish
 # Function to activate uvve environments
