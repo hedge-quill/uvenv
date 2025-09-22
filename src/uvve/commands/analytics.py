@@ -150,27 +150,90 @@ def analytics(
             console.print("\n[bold cyan]Environment Usage Summary[/bold cyan]")
 
             # Usage distribution
-            if summary["environments_by_usage"]:
+            total = summary["total_environments"]
+            active = summary["active_environments"]
+            unused = summary["unused_environments"]
+
+            if total > 0:
                 table = Table(show_header=True, header_style="bold blue")
                 table.add_column("Usage Category", style="cyan")
                 table.add_column("Count", style="green", justify="right")
                 table.add_column("Percentage", style="yellow", justify="right")
 
-                total = summary["total_environments"]
-                for category, count in summary["environments_by_usage"].items():
-                    percentage = (count / total * 100) if total > 0 else 0
-                    table.add_row(category, str(count), f"{percentage:.1f}%")
+                active_pct = (active / total * 100) if total > 0 else 0
+                unused_pct = (unused / total * 100) if total > 0 else 0
+
+                table.add_row("Active (Recent Use)", str(active), f"{active_pct:.1f}%")
+                table.add_row("Unused (30+ days)", str(unused), f"{unused_pct:.1f}%")
+                table.add_row("Total", str(total), "100.0%")
 
                 console.print(table)
 
-            # Show most used environments
-            if summary.get("most_used_environments"):
-                console.print("\n[bold blue]Most Active Environments:[/bold blue]")
-                for i, env in enumerate(summary["most_used_environments"][:5], 1):
-                    last_used = env.get("last_used", "Never")
+            # Show most used environments (sorted by usage count)
+            environments = summary.get("environments", [])
+            if environments:
+                # Filter to active environments and show top 5
+                active_envs = [
+                    env for env in environments if not env.get("is_unused", False)
+                ]
+
+                if active_envs:
+                    console.print("\n[bold blue]Most Active Environments:[/bold blue]")
+                    for i, env in enumerate(active_envs[:5], 1):
+                        usage_count = env.get("usage_count", 0)
+                        last_used = env.get("last_used", "Never")
+                        if isinstance(last_used, str) and last_used != "Never":
+                            try:
+                                # Format datetime if it's a string
+                                from datetime import datetime
+
+                                dt = datetime.fromisoformat(
+                                    last_used.replace("Z", "+00:00")
+                                )
+                                last_used = dt.strftime("%Y-%m-%d")
+                            except (ValueError, AttributeError):
+                                pass
+
+                        console.print(
+                            f"  {i}. [cyan]{env['name']}[/cyan] - "
+                            f"Used {usage_count} times, Last: {last_used}"
+                        )
+                else:
                     console.print(
-                        f"  {i}. [cyan]{env['name']}[/cyan] - Last used: {last_used}"
+                        "\n[yellow]No recently active environments found.[/yellow]"
                     )
+
+                # Show disk usage breakdown
+                if detailed:
+                    console.print("\n[bold blue]Environment Sizes:[/bold blue]")
+                    # Sort by size
+                    environments.sort(
+                        key=lambda x: x.get("size_bytes", 0), reverse=True
+                    )
+
+                    size_table = Table(show_header=True, header_style="bold blue")
+                    size_table.add_column("Environment", style="cyan")
+                    size_table.add_column("Size", style="green", justify="right")
+                    size_table.add_column("Python", style="yellow")
+                    size_table.add_column("Status", style="dim")
+
+                    for env in environments[:10]:  # Top 10 by size
+                        size_bytes = env.get("size_bytes", 0)
+                        size_mb = size_bytes / (1024 * 1024) if size_bytes > 0 else 0
+                        size_str = (
+                            f"{size_mb:.1f} MB"
+                            if size_mb < 1024
+                            else f"{size_mb / 1024:.1f} GB"
+                        )
+
+                        status = "Unused" if env.get("is_unused", False) else "Active"
+                        python_version = env.get("python_version", "unknown")
+
+                        size_table.add_row(
+                            env["name"], size_str, python_version, status
+                        )
+
+                    console.print(size_table)
 
     except Exception as e:
         console.print(f"[red]✗[/red] Failed to get analytics: {e}")
