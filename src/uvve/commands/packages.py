@@ -54,7 +54,7 @@ def add(
             target_env = current_env
 
         console.print(
-            f"[blue]Installing packages to environment '{target_env}'...[/blue]"
+            f"[blue]Adding packages to environment '{target_env}'...[/blue]"
         )
 
         # Install packages using uv pip install
@@ -212,4 +212,55 @@ def thaw(
 
     except Exception as e:
         console.print(f"[red]✗[/red] Failed to rebuild environment: {e}")
+        raise typer.Exit(1) from None
+
+
+def remove(
+    packages: list[str] = typer.Argument(
+        ...,
+        help="Package names to remove (e.g., 'requests' or 'django')",
+    ),
+    env_name: str | None = typer.Option(
+        None,
+        "--env",
+        "-e",
+        help="Environment name (auto-detected if not provided)",
+        autocompletion=complete_environment_names,
+    ),
+) -> None:
+    """Remove packages from a uvve environment."""
+    try:
+        env_manager = EnvironmentManager()
+
+        # Determine which environment to use
+        if env_name:
+            target_env = env_name
+        else:
+            # Try to auto-detect current environment
+            current_env = env_manager.get_current_environment()
+            if not current_env:
+                console.print("[red]✗[/red] No uvve environment is currently active")
+                console.print(
+                    "Either activate an environment with: [cyan]uvve activate <env_name>[/cyan]"
+                )
+                console.print(
+                    "Or specify environment with: [cyan]uvve remove --env <env_name> <packages>[/cyan]"
+                )
+                raise typer.Exit(1)
+            target_env = current_env
+
+        console.print(
+            f"[blue]Removing packages from environment '{target_env}'...[/blue]"
+        )
+
+        # Remove packages using FreezeManager
+        freeze_manager = FreezeManager()
+        freeze_manager.remove_packages(target_env, packages)
+
+        package_list = ", ".join(packages)
+        console.print(f"[green]✓[/green] Successfully removed packages: {package_list}")
+        console.print(f"[dim]Environment: {target_env}[/dim]")
+
+    except Exception as e:
+        console.print(f"[red]✗[/red] Failed to remove packages: {e}")
         raise typer.Exit(1) from None

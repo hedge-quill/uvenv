@@ -52,12 +52,13 @@ def main_callback(
 # Register environment commands
 app.command("create")(environment.create)
 app.command("activate")(environment.activate)
-app.command("remove")(environment.remove)
+app.command("delete")(environment.delete)
 app.command("local")(environment.local)
 app.command("list")(environment.env_list)
 
-# Register package commands
+# Package commands
 app.command("add")(packages.add)
+app.command("remove")(packages.remove)
 app.command("lock")(packages.lock)
 app.command("freeze")(packages.freeze)
 app.command("thaw")(packages.thaw)

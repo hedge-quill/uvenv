@@ -153,20 +153,20 @@ def activate(
         raise typer.Exit(1) from None
 
 
-def remove(
+def delete(
     name: str = typer.Argument(
         ...,
         help="Name of the virtual environment",
         autocompletion=complete_environment_names,
     ),
 ) -> None:
-    """Remove a virtual environment."""
+    """Delete a virtual environment."""
     try:
         env_manager = EnvironmentManager()
         env_manager.remove(name)
-        console.print(f"[green]✓[/green] Environment '{name}' removed successfully")
+        console.print(f"[green]✓[/green] Environment '{name}' deleted successfully")
     except Exception as e:
-        console.print(f"[red]✗[/red] Failed to remove environment '{name}': {e}")
+        console.print(f"[red]✗[/red] Failed to delete environment '{name}': {e}")
         raise typer.Exit(1) from None
 
 

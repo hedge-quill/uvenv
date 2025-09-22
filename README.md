@@ -48,7 +48,7 @@ uvve activate myproject
 uvve list
 
 # Remove an environment
-uvve remove myproject
+uvve delete myproject
 ```
 
 ## Basic Usage
@@ -88,6 +88,9 @@ cd /path/to/project   # Auto-activates when shell integration is installed
 # Add packages to active environment
 uvve activate myproject
 uvve add requests django==4.2  # Uses uv for fast installation
+
+# Remove packages from active environment
+uvve remove requests django     # Removes packages and updates tracking
 
 # Create and restore from lockfiles
 uvve lock myproject   # Captures all installed packages
@@ -200,6 +203,10 @@ uvve add requests            # Latest version
 uvve add django==4.2        # Specific version
 uvve add "fastapi>=0.68.0"   # Version constraint
 
+# Remove packages (uses uv for fast uninstallation)
+uvve remove requests         # Remove specific package
+uvve remove django fastapi   # Remove multiple packages
+
 # View installed packages
 uvve freeze myproject        # All packages
 uvve freeze myproject --tracked-only  # Only manually added packages
@@ -212,7 +219,8 @@ uvve thaw myproject          # Restore from lockfile
 **How it works:**
 
 - `uvve add` requires an active environment (safety feature)
-- Uses `uv pip install` for fast package installation
+- `uvve remove` requires an active environment and removes packages from tracking
+- Uses `uv pip install` and `uv pip uninstall` for fast package management
 - Tracks manually added packages in `uvve.requirements.txt`
 - Lockfiles capture complete environment state
 - `thaw` restores tracked packages automatically
@@ -276,9 +284,10 @@ uvve --show-completion >> ~/.zshrc
 | `uvve activate <name>`          | Activate environment (with shell integration) or print activation snippet |
 | `uvve local <name>`             | Create .uvve-version file for automatic directory-based activation        |
 | `uvve add <packages...>`        | Add packages to currently active environment (uses uv)                    |
+| `uvve remove <packages...>`     | Remove packages from currently active environment (uses uv)               |
 | `uvve list`                     | List all virtual environments                                             |
 | `uvve list --usage`             | List environments with usage statistics                                   |
-| `uvve remove <name>`            | Remove a virtual environment                                              |
+| `uvve delete <name>`            | Delete a virtual environment                                              |
 | `uvve lock <name>`              | Generate a lockfile for the environment                                   |
 | `uvve thaw <name>`              | Rebuild environment from lockfile                                         |
 | `uvve freeze <name>`            | Show installed packages in environment                                    |
