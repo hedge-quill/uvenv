@@ -1,6 +1,7 @@
 """Analytics and status commands."""
 
 import typer
+from datetime import datetime
 from rich.console import Console
 from rich.table import Table
 
@@ -51,37 +52,76 @@ def status(
         total = summary["total_environments"]
         unused = summary["unused_environments"]
 
-        table = Table(show_header=True, header_style="bold blue")
-        table.add_column("Metric", style="cyan", no_wrap=True)
-        table.add_column("Value", style="green")
-        table.add_column("Description", style="dim")
+        if total == 0:
+            console.print("[yellow]No environments found[/yellow]")
+            return
 
-        table.add_row("Total Environments", str(total), "All created environments")
-        table.add_row(
-            "Active Environments", str(total - unused), "Recently used environments"
-        )
-        table.add_row("Unused Environments", str(unused), "Not used in 30+ days")
+        # Utility summary table
+        health_table = Table()
+        health_table.add_column("Environment", style="cyan")
+        health_table.add_column("Last Used", style="white")
+        health_table.add_column("Usage Count", style="green")
+        health_table.add_column("Size", style="blue")
+        health_table.add_column("Utility", style="magenta")
 
-        if total > 0:
-            efficiency = round(((total - unused) / total) * 100, 1)
-            table.add_row(
-                "Efficiency", f"{efficiency}%", "Percentage of environments in use"
+        for env in summary["environments"]:
+            # Utility status
+            usage_count = env["usage_count"]
+            days_since_use = env["days_since_use"]
+
+            if usage_count == 0:
+                health = "🔴 Never used"
+            elif days_since_use is None:
+                health = "🟡 Recently created"
+            elif days_since_use > 90:
+                health = "🔴 Stale (90+ days)"
+            elif days_since_use > 30:
+                health = "🟡 Unused (30+ days)"
+            elif usage_count < 5:
+                health = "🟡 Low usage"
+            else:
+                health = "🟢 Healthy"
+
+            # Format last used
+            if env["last_used"]:
+                if days_since_use is not None:
+                    if days_since_use == 0:
+                        last_used_str = "Today"
+                    elif days_since_use == 1:
+                        last_used_str = "Yesterday"
+                    else:
+                        last_used_str = f"{days_since_use}d ago"
+                else:
+                    last_used_str = "Recently"
+            else:
+                last_used_str = "Never"
+
+            # Format size
+            size_bytes = env["size_bytes"]
+            if size_bytes < 1024 * 1024:
+                size_str = f"{size_bytes / 1024:.0f}KB"
+            elif size_bytes < 1024 * 1024 * 1024:
+                size_str = f"{size_bytes / (1024 * 1024):.0f}MB"
+            else:
+                size_str = f"{size_bytes / (1024 * 1024 * 1024):.1f}GB"
+
+            health_table.add_row(
+                env["name"], last_used_str, str(usage_count), size_str, health
             )
 
-        console.print(table)
+        console.print(health_table)
 
-        # Recommendations
+        # Summary message with percentages
         if unused > 0:
+            unused_pct = (unused / total * 100) if total > 0 else 0
             console.print(
-                f"\n[yellow]💡 Found {unused} unused environment(s). "
+                f"\n[yellow]💡 Found {unused} unused environment(s) ({unused_pct:.1f}%). "
                 f"Consider running `uvve cleanup --dry-run` to review.[/yellow]"
             )
-
-        # Total disk usage
-        total_size = summary.get("total_size_mb", 0)
-        if total_size > 0:
-            size_gb = total_size / 1024
-            console.print(f"\n[blue]Total disk usage: {size_gb:.1f} GB[/blue]")
+        else:
+            console.print(
+                f"\n[green]✅ All {total} environments are being used actively![/green]"
+            )
 
     except Exception as e:
         console.print(f"[red]✗[/red] Failed to get status: {e}")
@@ -108,6 +148,9 @@ def analytics(
             # Show analytics for specific environment
             try:
                 env_analytics = analytics_manager.get_environment_analytics(name)
+                metadata = env_analytics.get("metadata", {})
+                derived_stats = env_analytics.get("derived_stats", {})
+                size_info = env_analytics.get("size_info", {})
 
                 console.print(f"\n[bold cyan]Analytics for '{name}'[/bold cyan]")
 
@@ -115,34 +158,83 @@ def analytics(
                 table.add_column("Metric", style="cyan")
                 table.add_column("Value", style="green")
 
+                # Basic info
                 table.add_row(
-                    "Python Version", env_analytics.get("python_version", "Unknown")
+                    "Python Version", metadata.get("python_version", "Unknown")
                 )
-                table.add_row("Created", env_analytics.get("created", "Unknown"))
-                table.add_row("Last Used", env_analytics.get("last_used", "Never"))
+
+                # Format created_at date
+                created_at = metadata.get("created_at")
+                if created_at:
+                    try:
+                        # Remove microseconds and format nicely
+                        if "." in created_at:
+                            created_at = created_at.split(".")[0]
+                        created_str = created_at.replace("T", " ")
+                    except Exception:
+                        created_str = str(created_at)
+                else:
+                    created_str = "Unknown"
+
+                table.add_row("Created", created_str)
+
+                # Format last_used date
+                last_used = metadata.get("last_used")
+                if last_used:
+                    try:
+                        # Remove microseconds and format nicely
+                        if isinstance(last_used, str):
+                            if "." in last_used:
+                                last_used = last_used.split(".")[0]
+                            last_used_str = last_used.replace("T", " ")
+                        else:
+                            last_used_str = str(last_used)
+                    except Exception:
+                        last_used_str = str(last_used)
+                else:
+                    last_used_str = "Never"
+
+                table.add_row("Last Used", last_used_str)
+
+                # Derived stats
                 table.add_row(
-                    "Days Since Used", str(env_analytics.get("days_since_used", "N/A"))
+                    "Days Since Used", str(derived_stats.get("days_since_used", "N/A"))
                 )
-                table.add_row("Size", env_analytics.get("size", "Unknown"))
-                table.add_row(
-                    "Package Count", str(env_analytics.get("package_count", 0))
-                )
+                table.add_row("Usage Count", str(metadata.get("usage_count", 0)))
+
+                # Size info
+                size_bytes = size_info.get("size_bytes", 0)
+                if size_bytes > 0:
+                    if size_bytes < 1024 * 1024:
+                        size_str = f"{size_bytes / 1024:.1f} KB"
+                    elif size_bytes < 1024 * 1024 * 1024:
+                        size_str = f"{size_bytes / (1024 * 1024):.1f} MB"
+                    else:
+                        size_str = f"{size_bytes / (1024 * 1024 * 1024):.1f} GB"
+                else:
+                    size_str = "Unknown"
+
+                table.add_row("Size", size_str)
+
+                # Package count (if available)
+                package_count = derived_stats.get("package_count", 0)
+                table.add_row("Package Count", str(package_count))
 
                 console.print(table)
 
                 # Show tags if any
-                tags = env_analytics.get("tags", [])
+                tags = metadata.get("tags", [])
                 if tags:
                     console.print(f"\n[blue]Tags:[/blue] {', '.join(tags)}")
 
                 # Show description if any
-                description = env_analytics.get("description")
+                description = metadata.get("description")
                 if description:
                     console.print(f"\n[blue]Description:[/blue] {description}")
 
             except Exception as e:
                 console.print(f"[red]✗[/red] Failed to get analytics for '{name}': {e}")
-                raise typer.Exit(1)
+                raise typer.Exit(1) from None
         else:
             # Show overall analytics
             summary = analytics_manager.get_usage_summary()

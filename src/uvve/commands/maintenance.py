@@ -67,19 +67,24 @@ def edit(
     try:
         env_manager = EnvironmentManager()
 
-        # Update metadata
+        # Get current metadata
+        current_metadata = env_manager.get_metadata(name)
         changes_made = []
 
         if description is not None:
-            env_manager.update_metadata(name, description=description)
+            env_manager.update_metadata_field(name, "description", description)
             changes_made.append(f"description: '{description}'")
 
         if add_tag:
-            env_manager.add_tags(name, add_tag)
+            current_tags = current_metadata.get("tags", [])
+            new_tags = list(set(current_tags + add_tag))  # Avoid duplicates
+            env_manager.update_metadata_field(name, "tags", new_tags)
             changes_made.append(f"added tags: {', '.join(add_tag)}")
 
         if remove_tag:
-            env_manager.remove_tags(name, remove_tag)
+            current_tags = current_metadata.get("tags", [])
+            new_tags = [tag for tag in current_tags if tag not in remove_tag]
+            env_manager.update_metadata_field(name, "tags", new_tags)
             changes_made.append(f"removed tags: {', '.join(remove_tag)}")
 
         if project_root:
@@ -87,7 +92,9 @@ def edit(
             from pathlib import Path
 
             project_root_path = Path(project_root).resolve()
-            env_manager.set_project_root(name, str(project_root_path))
+            env_manager.update_metadata_field(
+                name, "project_root", str(project_root_path)
+            )
             changes_made.append(f"project root: '{project_root_path}'")
 
         if changes_made:
@@ -124,7 +131,7 @@ def cleanup(
         env_manager = EnvironmentManager()
 
         # Get unused environments
-        unused_envs = analytics_manager.get_unused_environments(unused_for)
+        unused_envs = analytics_manager.find_unused_environments(unused_for)
 
         if not unused_envs:
             console.print(
@@ -180,7 +187,6 @@ def cleanup(
             freed_mb = 0
 
             for env in unused_envs:
-                env_names = [env["name"] for env in unused_envs]
                 should_remove = typer.confirm(
                     f"Remove environment '{env['name']}'? "
                     f"(Last used: {env.get('last_used', 'Never')})"
