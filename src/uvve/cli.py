@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import typer
 from datetime import datetime
+from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 
@@ -426,8 +427,27 @@ def thaw(
 
 
 @app.command()
-def status() -> None:
+def status(
+    current: bool = typer.Option(
+        False,
+        "--current",
+        help="Only show the currently active environment name",
+    ),
+) -> None:
     """Show environment utility overview."""
+    if current:
+        # Just return the current environment name for shell integration
+        try:
+            env_manager = EnvironmentManager()
+            current_env = env_manager.get_current_environment()
+            if current_env:
+                console.print(current_env, end="")
+            else:
+                raise typer.Exit(1)
+        except Exception:
+            raise typer.Exit(1) from None
+        return
+
     try:
         summary = analytics_manager.get_usage_summary()
 
@@ -1111,6 +1131,51 @@ def feed_status() -> None:
 
     except Exception as e:
         console.print(f"[red]✗[/red] Failed to get Azure status: {e}")
+        raise typer.Exit(1) from None
+
+
+@app.command()
+def local(
+    env_name: str = typer.Argument(..., help="Name of the environment to use locally"),
+) -> None:
+    """Create a .uvve-version file to auto-activate environment in this directory."""
+    try:
+        env_manager = EnvironmentManager()
+
+        # Check if environment exists
+        if not env_manager.path_manager.environment_exists(env_name):
+            console.print(f"[red]✗[/red] Environment '{env_name}' does not exist")
+            console.print("Run [cyan]uvve list[/cyan] to see available environments")
+            raise typer.Exit(1)
+
+        # Create .uvve-version file in current directory
+        version_file = Path.cwd() / ".uvve-version"
+
+        try:
+            version_file.write_text(env_name + "\n")
+            console.print(
+                f"[green]✓[/green] Created .uvve-version file with environment '{env_name}'"
+            )
+            console.print(f"[dim]Location: {version_file}[/dim]")
+
+            # Check if shell integration is available
+            if hasattr(ActivationManager, "has_shell_integration"):
+                console.print(
+                    "\n[yellow]💡 Tip:[/yellow] Make sure you have uvve shell integration installed for auto-activation:"
+                )
+                console.print(
+                    "  [cyan]uvve shell-integration >> ~/.zshrc && source ~/.zshrc[/cyan]"
+                )
+
+        except PermissionError:
+            console.print(f"[red]✗[/red] Permission denied writing to {version_file}")
+            raise typer.Exit(1)
+        except Exception as e:
+            console.print(f"[red]✗[/red] Failed to create .uvve-version file: {e}")
+            raise typer.Exit(1)
+
+    except Exception as e:
+        console.print(f"[red]✗[/red] Failed to set local environment: {e}")
         raise typer.Exit(1) from None
 
 
