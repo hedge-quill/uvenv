@@ -338,3 +338,78 @@ class FreezeManager:
             raise RuntimeError(f"Failed to list packages: {error_msg}") from e
         except Exception as e:
             raise RuntimeError(f"Failed to list packages: {e}") from e
+
+    def remove_packages(self, name: str, packages: list[str]) -> None:
+        """Remove packages from an environment and update tracking.
+
+        Args:
+            name: Environment name
+            packages: List of package names to remove (e.g., ['requests', 'django'])
+
+        Raises:
+            RuntimeError: If environment doesn't exist or removal fails
+        """
+        if not self.path_manager.environment_exists(name):
+            raise RuntimeError(f"Environment '{name}' does not exist")
+
+        try:
+            # Get the Python executable for the environment
+            python_path = self.path_manager.get_env_python_path(name)
+
+            # Remove packages using uv pip uninstall
+            # Don't capture output so users can see the uninstallation progress
+            cmd = ["uv", "pip", "uninstall", "--python", str(python_path)] + packages
+            subprocess.run(cmd, check=True)
+
+            # Update the requirements tracking file
+            self._remove_from_requirements_file(name, packages)
+
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Failed to remove packages") from e
+        except Exception as e:
+            raise RuntimeError(f"Failed to remove packages: {e}") from e
+
+    def _remove_from_requirements_file(self, name: str, removed_packages: list[str]) -> None:
+        """Remove packages from the requirements tracking file.
+
+        Args:
+            name: Environment name
+            removed_packages: List of package names to remove
+        """
+        requirements_path = self.path_manager.get_requirements_path(name)
+
+        # If requirements file doesn't exist, nothing to do
+        if not requirements_path.exists():
+            return
+
+        # Read existing requirements
+        existing_requirements = set()
+        with open(requirements_path) as f:
+            existing_requirements = {
+                line.strip()
+                for line in f
+                if line.strip() and not line.startswith("#")
+            }
+
+        # Extract package names from removed packages (handle version specifiers)
+        removed_package_names = set()
+        for pkg in removed_packages:
+            # Extract package name (before any version specifier)
+            pkg_name = pkg.split("==")[0].split(">=")[0].split("<=")[0].split("~=")[0]
+            removed_package_names.add(pkg_name.strip().lower())
+
+        # Filter out removed packages from existing requirements
+        filtered_requirements = {
+            req
+            for req in existing_requirements
+            if req.split("==")[0].split(">=")[0].split("<=")[0].split("~=")[0].strip().lower()
+            not in removed_package_names
+        }
+
+        # Write updated requirements file
+        with open(requirements_path, "w") as f:
+            f.write(f"# uvve requirements for environment: {name}\n")
+            f.write(f"# Updated on: {datetime.now().isoformat()}\n")
+            f.write("# This file tracks manually added packages via 'uvve add'\n\n")
+            for req in sorted(filtered_requirements):
+                f.write(f"{req}\n")
