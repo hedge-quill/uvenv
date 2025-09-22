@@ -68,6 +68,17 @@ class PathManager:
         """
         return self.get_env_path(name) / "uvve.lock"
 
+    def get_requirements_path(self, name: str) -> Path:
+        """Get the requirements file path for an environment.
+
+        Args:
+            name: Environment name
+
+        Returns:
+            Path to the uvve.requirements.txt file
+        """
+        return self.get_env_path(name) / "uvve.requirements.txt"
+
     def get_metadata_path(self, name: str) -> Path:
         """Get the metadata file path for an environment.
 
