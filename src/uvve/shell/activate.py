@@ -162,7 +162,44 @@ uvve() {
         # For all other commands, just call uvve normally
         command uvve "$@"
     fi
-}"""
+}
+
+# Auto-activate uvve environment when changing directories
+uvve_auto_activate() {
+    if [[ -f ".uvve-version" ]]; then
+        local env_name
+        env_name=$(cat .uvve-version 2>/dev/null | head -n1 | tr -d '\\n\\r')
+        if [[ -n "$env_name" ]]; then
+            # Check if we're not already in this environment
+            local current_env
+            current_env=$(command uvve status --current 2>/dev/null || echo "")
+            if [[ "$current_env" != "$env_name" ]]; then
+                echo "Auto-activating uvve environment: $env_name"
+                eval "$(command uvve activate "$env_name" 2>/dev/null)" || {
+                    echo "Warning: Failed to activate environment '$env_name' from .uvve-version"
+                    echo "Run 'uvve list' to see available environments"
+                }
+            fi
+        fi
+    fi
+}
+
+# Hook into cd command for bash/zsh
+if [[ -n "$BASH_VERSION" ]] || [[ -n "$ZSH_VERSION" ]]; then
+    if [[ -n "$ZSH_VERSION" ]]; then
+        # ZSH hook
+        autoload -U add-zsh-hook
+        add-zsh-hook chpwd uvve_auto_activate
+    else
+        # Bash hook using PROMPT_COMMAND
+        if [[ "$PROMPT_COMMAND" != *"uvve_auto_activate"* ]]; then
+            PROMPT_COMMAND="uvve_auto_activate; ${PROMPT_COMMAND}"
+        fi
+    fi
+fi
+
+# Also check on initial load
+uvve_auto_activate"""
 
     def _generate_fish_integration(self) -> str:
         """Generate fish shell integration script."""
@@ -181,7 +218,33 @@ function uvve
         # For all other commands, just call uvve normally
         command uvve $argv
     end
-end"""
+end
+
+# Auto-activate uvve environment when changing directories
+function uvve_auto_activate
+    if test -f ".uvve-version"
+        set env_name (cat .uvve-version 2>/dev/null | head -n1 | tr -d '\\n\\r')
+        if test -n "$env_name"
+            # Check if we're not already in this environment
+            set current_env (command uvve status --current 2>/dev/null; or echo "")
+            if test "$current_env" != "$env_name"
+                echo "Auto-activating uvve environment: $env_name"
+                eval (command uvve activate "$env_name" 2>/dev/null; or begin
+                    echo "Warning: Failed to activate environment '$env_name' from .uvve-version"
+                    echo "Run 'uvve list' to see available environments"
+                end)
+            end
+        end
+    end
+end
+
+# Hook into directory changes for fish
+function __uvve_on_pwd --on-variable PWD
+    uvve_auto_activate
+end
+
+# Also check on initial load
+uvve_auto_activate"""
 
     def _generate_powershell_integration(self) -> str:
         """Generate PowerShell integration script."""

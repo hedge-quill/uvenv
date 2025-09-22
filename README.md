@@ -81,6 +81,10 @@ uvve activate myproject
 # Or activate with eval (without shell integration)
 eval "$(uvve activate myproject)"
 
+# Set up automatic activation for a directory
+uvve local myproject  # Creates .uvve-version file
+cd /path/to/project   # Auto-activates when shell integration is installed
+
 # Create and restore from lockfiles
 uvve lock myproject
 uvve thaw myproject
@@ -141,12 +145,39 @@ eval "$(uvve activate myproject)"
 - ✅ More intuitive for users
 - ✅ Consistent with other environment managers
 - ✅ One-time setup, lifetime benefit
+- ✅ Automatic activation via `.uvve-version` files
 
 **When to use `eval` method:**
 
 - ⚙️ Automation scripts and CI/CD
 - ⚙️ One-off usage without permanent setup
 - ⚙️ Shell functions where integration isn't available
+
+### Directory-Based Activation
+
+With shell integration installed, you can set up automatic environment activation:
+
+```bash
+# Set up a project to auto-activate an environment
+cd /path/to/my/project
+uvve local myproject  # Creates .uvve-version file
+
+# Now whenever you cd into this directory (or subdirectories)
+# the environment will automatically activate
+cd /path/to/my/project  # Auto-activates 'myproject'
+cd /path/to/my/project/src  # Still uses 'myproject'
+cd /path/to/other/project  # Deactivates when leaving
+
+# View which environment is set for current directory
+cat .uvve-version  # Shows: myproject
+```
+
+**How it works:**
+
+- Shell integration hooks into directory changes
+- Looks for `.uvve-version` files in current directory
+- Automatically activates the specified environment
+- Works across bash, zsh, and fish shells
 
 ### Azure DevOps Integration
 
@@ -205,6 +236,7 @@ uvve --show-completion >> ~/.zshrc
 | `uvve python list`              | List available and installed Python versions                              |
 | `uvve create <name> <version>`  | Create a virtual environment with optional metadata                       |
 | `uvve activate <name>`          | Activate environment (with shell integration) or print activation snippet |
+| `uvve local <name>`             | Create .uvve-version file for automatic directory-based activation        |
 | `uvve list`                     | List all virtual environments                                             |
 | `uvve list --usage`             | List environments with usage statistics                                   |
 | `uvve remove <name>`            | Remove a virtual environment                                              |
