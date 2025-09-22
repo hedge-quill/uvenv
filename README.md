@@ -85,9 +85,17 @@ eval "$(uvve activate myproject)"
 uvve local myproject  # Creates .uvve-version file
 cd /path/to/project   # Auto-activates when shell integration is installed
 
+# Add packages to active environment
+uvve activate myproject
+uvve add requests django==4.2  # Uses uv for fast installation
+
 # Create and restore from lockfiles
-uvve lock myproject
-uvve thaw myproject
+uvve lock myproject   # Captures all installed packages
+uvve thaw myproject   # Restores packages from lockfile
+
+# View installed packages
+uvve freeze myproject              # Show all packages
+uvve freeze myproject --tracked-only  # Show only manually added packages
 
 # View environment analytics
 uvve analytics myproject
@@ -179,6 +187,36 @@ cat .uvve-version  # Shows: myproject
 - Automatically activates the specified environment
 - Works across bash, zsh, and fish shells
 
+### Package Management
+
+uvve provides a streamlined workflow for managing packages in your environments:
+
+```bash
+# Activate an environment first
+uvve activate myproject
+
+# Add packages (uses uv for fast installation)
+uvve add requests            # Latest version
+uvve add django==4.2        # Specific version
+uvve add "fastapi>=0.68.0"   # Version constraint
+
+# View installed packages
+uvve freeze myproject        # All packages
+uvve freeze myproject --tracked-only  # Only manually added packages
+
+# Create reproducible environments
+uvve lock myproject          # Capture exact versions
+uvve thaw myproject          # Restore from lockfile
+```
+
+**How it works:**
+
+- `uvve add` requires an active environment (safety feature)
+- Uses `uv pip install` for fast package installation
+- Tracks manually added packages in `uvve.requirements.txt`
+- Lockfiles capture complete environment state
+- `thaw` restores tracked packages automatically
+
 ### Azure DevOps Integration
 
 Set up private package feeds with automatic authentication:
@@ -237,11 +275,13 @@ uvve --show-completion >> ~/.zshrc
 | `uvve create <name> <version>`  | Create a virtual environment with optional metadata                       |
 | `uvve activate <name>`          | Activate environment (with shell integration) or print activation snippet |
 | `uvve local <name>`             | Create .uvve-version file for automatic directory-based activation        |
+| `uvve add <packages...>`        | Add packages to currently active environment (uses uv)                    |
 | `uvve list`                     | List all virtual environments                                             |
 | `uvve list --usage`             | List environments with usage statistics                                   |
 | `uvve remove <name>`            | Remove a virtual environment                                              |
 | `uvve lock <name>`              | Generate a lockfile for the environment                                   |
 | `uvve thaw <name>`              | Rebuild environment from lockfile                                         |
+| `uvve freeze <name>`            | Show installed packages in environment                                    |
 | `uvve analytics [name]`         | Show usage analytics and insights                                         |
 | `uvve status`                   | Show environment health overview                                          |
 | `uvve cleanup`                  | Clean up unused environments                                              |
