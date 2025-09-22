@@ -215,15 +215,15 @@ class FreezeManager:
             python_path = self.path_manager.get_env_python_path(name)
 
             # Install packages using uv pip install
+            # Don't capture output so users can see the installation progress
             cmd = ["uv", "pip", "install", "--python", str(python_path)] + packages
-            subprocess.run(cmd, capture_output=True, text=True, check=True)
+            subprocess.run(cmd, check=True)
 
             # Update the requirements tracking file
             self._update_requirements_file(name, packages)
 
         except subprocess.CalledProcessError as e:
-            error_msg = e.stderr.strip() if e.stderr else "Unknown error"
-            raise RuntimeError(f"Failed to install packages: {error_msg}") from e
+            raise RuntimeError(f"Failed to install packages") from e
         except Exception as e:
             raise RuntimeError(f"Failed to add packages: {e}") from e
 

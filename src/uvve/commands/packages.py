@@ -54,7 +54,7 @@ def add(
             target_env = current_env
 
         console.print(
-            f"[blue]Installing packages to environment '{target_env}'...[/blue]"
+            f"[blue]Adding packages to environment '{target_env}'...[/blue]"
         )
 
         # Install packages using uv pip install
