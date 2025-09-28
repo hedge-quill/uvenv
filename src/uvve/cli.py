@@ -55,6 +55,7 @@ app.command("activate")(environment.activate)
 app.command("remove")(environment.remove)
 app.command("local")(environment.local)
 app.command("list")(environment.env_list)
+app.command("bump-python")(environment.bump_python)
 
 # Register package commands
 app.command("add")(packages.add)
@@ -111,17 +112,17 @@ def python_list() -> None:
         python_manager = PythonManager()
         available_versions = python_manager.list_available()
         installed_versions = python_manager.list_installed()
-        
+
         if not available_versions:
             console.print("[yellow]No Python versions found[/yellow]")
             return
-        
+
         # Create table
         table = Table(show_header=True, header_style="bold blue")
         table.add_column("Version", style="cyan")
         table.add_column("Status", style="green")
         table.add_column("Path", style="dim")
-        
+
         for version in available_versions:
             if version in installed_versions:
                 status = "✓ Installed"
@@ -129,11 +130,11 @@ def python_list() -> None:
             else:
                 status = "Available"
                 path = "-"
-            
+
             table.add_row(version, status, path)
-        
+
         console.print(table)
-        
+
     except Exception as e:
         console.print(f"[red]✗[/red] Failed to list Python versions: {e}")
         raise typer.Exit(1) from None
@@ -150,12 +151,12 @@ def python_install(
     """Install a Python version."""
     try:
         python_manager = PythonManager()
-        
+
         with console.status(f"[bold blue]Installing Python {version}..."):
             python_manager.install(version)
-        
+
         console.print(f"[green]✓[/green] Python {version} installed successfully")
-        
+
     except Exception as e:
         console.print(f"[red]✗[/red] Failed to install Python {version}: {e}")
         raise typer.Exit(1) from None
@@ -172,16 +173,14 @@ def python_remove(
     """Remove a Python version."""
     try:
         python_manager = PythonManager()
-        
-        if not typer.confirm(
-            f"Are you sure you want to remove Python {version}?"
-        ):
+
+        if not typer.confirm(f"Are you sure you want to remove Python {version}?"):
             console.print("[yellow]Removal cancelled[/yellow]")
             return
-        
+
         python_manager.remove(version)
         console.print(f"[green]✓[/green] Python {version} removed successfully")
-        
+
     except Exception as e:
         console.print(f"[red]✗[/red] Failed to remove Python {version}: {e}")
         raise typer.Exit(1) from None
