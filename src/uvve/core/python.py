@@ -21,6 +21,21 @@ class PythonManager:
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"Failed to install Python {version}: {e.stderr}") from e
 
+    def remove(self, version: str) -> None:
+        """Remove a Python version using uv.
+
+        Args:
+            version: Python version to remove (e.g., "3.11", "3.11.5")
+
+        Raises:
+            RuntimeError: If removal fails
+        """
+        try:
+            cmd = ["uv", "python", "uninstall", version]
+            subprocess.run(cmd, capture_output=True, text=True, check=True)
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Failed to remove Python {version}: {e.stderr}") from e
+
     def list_installed(self) -> list[str]:
         """List installed Python versions.
 

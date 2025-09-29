@@ -1,13 +1,12 @@
 """Environment management commands."""
 
 import typer
+from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 
 from uvve.core.manager import EnvironmentManager
-from uvve.core.freeze import FreezeManager
 from uvve.shell.activate import ActivationManager
-from pathlib import Path
 
 console = Console()
 
@@ -212,42 +211,4 @@ def local(
 
     except Exception as e:
         console.print(f"[red]✗[/red] Failed to set local environment: {e}")
-        raise typer.Exit(1) from None
-
-
-def bump_python(
-    new_env_name: str = typer.Argument(..., help="Name of the new environment"),
-    python_version: str = typer.Argument(
-        ..., help="Target Python version (e.g., '3.13.5')"
-    ),
-) -> None:
-    """Create a new environment with a specified Python version, copying dependencies from the active environment."""
-    try:
-        env_manager = EnvironmentManager()
-        freeze_manager = FreezeManager()
-        source_env = env_manager.get_current_environment()
-        if not source_env:
-            console.print("[red]✗[/red] No uvve environment is currently active.")
-            console.print(
-                "Activate an environment with: [cyan]uvve activate <env_name>[/cyan]"
-            )
-            raise typer.Exit(1)
-        if env_manager.path_manager.environment_exists(new_env_name):
-            console.print(f"[red]✗[/red] Environment '{new_env_name}' already exists.")
-            raise typer.Exit(1)
-        console.print(
-            f"[blue]Bumping environment '{source_env}' to '{new_env_name}' with Python {python_version}...[/blue]"
-        )
-        freeze_manager.lock(source_env)
-        env_manager.create(
-            name=new_env_name,
-            python_version=python_version,
-        )
-        freeze_manager.thaw(new_env_name)
-        console.print(
-            f"[green]✓[/green] Environment '{new_env_name}' created with Python {python_version} and dependencies from '{source_env}'."
-        )
-        console.print(f"Activate with: [cyan]uvve activate {new_env_name}[/cyan]")
-    except Exception as e:
-        console.print(f"[red]✗[/red] Failed to bump environment: {e}")
         raise typer.Exit(1) from None

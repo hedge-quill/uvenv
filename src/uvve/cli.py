@@ -55,7 +55,6 @@ app.command("activate")(environment.activate)
 app.command("remove")(environment.remove)
 app.command("local")(environment.local)
 app.command("list")(environment.env_list)
-app.command("bump-python")(environment.bump_python)
 
 # Register package commands
 app.command("add")(packages.add)
@@ -183,6 +182,153 @@ def python_remove(
 
     except Exception as e:
         console.print(f"[red]✗[/red] Failed to remove Python {version}: {e}")
+        raise typer.Exit(1) from None
+
+
+def complete_environment_names(incomplete: str) -> list[str]:
+    """Auto-completion for environment names."""
+    try:
+        from uvve.core.manager import EnvironmentManager
+
+        env_manager = EnvironmentManager()
+        environments = env_manager.list()
+        return [
+            env["name"] for env in environments if env["name"].startswith(incomplete)
+        ]
+    except Exception:
+        return []
+
+
+@python_app.command("bump")
+def python_bump(
+    new_version: str = typer.Argument(
+        ...,
+        help="Target Python version (e.g., '3.13.5')",
+        autocompletion=complete_python_versions,
+    ),
+    env_name: str | None = typer.Argument(
+        None,
+        help="Environment name (auto-detected if not provided)",
+        autocompletion=complete_environment_names,
+    ),
+) -> None:
+    """Bump the Python version of a virtual environment."""
+    try:
+        from uvve.core.manager import EnvironmentManager
+        from uvve.core.freeze import FreezeManager
+
+        env_manager = EnvironmentManager()
+        freeze_manager = FreezeManager()
+        python_manager = PythonManager()
+
+        # Determine which environment to bump
+        if env_name:
+            # Use specified environment
+            target_env = env_name
+            if not env_manager.path_manager.environment_exists(target_env):
+                console.print(
+                    f"[red]✗[/red] Environment '{target_env}' does not exist."
+                )
+                raise typer.Exit(1)
+        else:
+            # Auto-detect current environment
+            target_env = env_manager.get_current_environment()
+            if not target_env:
+                console.print("[red]✗[/red] No uvve environment is currently active.")
+                console.print(
+                    "Either activate an environment with: [cyan]uvve activate <env_name>[/cyan]"
+                )
+                console.print(
+                    "Or specify environment with: [cyan]uvve python bump <version> <env_name>[/cyan]"
+                )
+                raise typer.Exit(1)
+
+        # Check if target Python version is available
+        available_versions = python_manager.list_available()
+        if new_version not in available_versions:
+            console.print(f"[red]✗[/red] Python {new_version} is not available.")
+            console.print("Available versions:")
+            for version in available_versions[-10:]:  # Show last 10 versions
+                console.print(f"  - {version}")
+            raise typer.Exit(1)
+
+        # Get current environment metadata to check current Python version
+        current_metadata = env_manager.get_metadata(target_env)
+        current_python = current_metadata.get("python_version", "unknown")
+
+        if current_python == new_version:
+            console.print(
+                f"[yellow]Environment '{target_env}' is already using Python {new_version}[/yellow]"
+            )
+            return
+
+        console.print(
+            f"[blue]Bumping environment '{target_env}' from Python {current_python} to {new_version}...[/blue]"
+        )
+
+        # Create a temporary lockfile to preserve dependencies
+        temp_env_name = f"{target_env}_bump_temp"
+
+        # Step 1: Create lockfile from current environment
+        console.print("[dim]1. Creating lockfile from current environment...[/dim]")
+        freeze_manager.lock(target_env)
+
+        # Step 2: Create temporary environment with new Python version
+        console.print(
+            f"[dim]2. Creating temporary environment with Python {new_version}...[/dim]"
+        )
+        env_manager.create(
+            name=temp_env_name,
+            python_version=new_version,
+            description=current_metadata.get("description", ""),
+            tags=current_metadata.get("tags", []),
+        )
+
+        # Step 3: Restore dependencies to temporary environment
+        console.print("[dim]3. Restoring dependencies...[/dim]")
+        # Copy the lockfile from the source to the temp environment so thaw can find it
+        import shutil as shutil_module
+
+        source_lockfile = freeze_manager.path_manager.get_lockfile_path(target_env)
+        temp_lockfile = freeze_manager.path_manager.get_lockfile_path(temp_env_name)
+        if source_lockfile.exists():
+            shutil_module.copy2(source_lockfile, temp_lockfile)
+            freeze_manager.thaw(temp_env_name)
+
+        # Step 4: Remove old environment
+        console.print("[dim]4. Removing old environment...[/dim]")
+        env_manager.remove(target_env)
+
+        # Step 5: Rename temporary environment to original name
+        console.print("[dim]5. Renaming temporary environment...[/dim]")
+        import shutil
+
+        temp_path = env_manager.path_manager.get_env_path(temp_env_name)
+        target_path = env_manager.path_manager.get_env_path(target_env)
+        shutil.move(str(temp_path), str(target_path))
+
+        # Update metadata with new Python version
+        env_manager._create_metadata(
+            name=target_env,
+            python_version=new_version,
+            description=current_metadata.get("description", ""),
+            tags=current_metadata.get("tags", []),
+        )
+
+        console.print(
+            f"[green]✓[/green] Environment '{target_env}' successfully bumped to Python {new_version}"
+        )
+        console.print(f"Activate with: [cyan]uvve activate {target_env}[/cyan]")
+
+    except Exception as e:
+        console.print(f"[red]✗[/red] Failed to bump Python version: {e}")
+        # Clean up temporary environment if it exists
+        try:
+            temp_env_name = f"{target_env}_bump_temp"
+            if env_manager.path_manager.environment_exists(temp_env_name):
+                env_manager.remove(temp_env_name)
+        except:
+            pass
         raise typer.Exit(1) from None
 
 
