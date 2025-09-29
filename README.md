@@ -126,6 +126,10 @@ uvve python install 3.12
 
 # List available and installed versions
 uvve python list
+
+# Upgrade existing environments to newer Python versions
+uvve python bump 3.12 myproject  # Bump specific environment
+uvve activate myproject && uvve python bump 3.12  # Bump active environment
 ```
 
 ## Advanced Usage
@@ -225,6 +229,62 @@ uvve thaw myproject          # Restore from lockfile
 - Lockfiles capture complete environment state
 - `thaw` restores tracked packages automatically
 
+### Python Version Management
+
+uvve provides comprehensive Python version management, including the ability to upgrade existing environments to newer Python versions while preserving dependencies:
+
+```bash
+# Install Python versions
+uvve python install 3.12     # Install Python 3.12
+uvve python install 3.13.5   # Install specific patch version
+
+# List available and installed Python versions
+uvve python list
+
+# Bump an existing environment to a newer Python version
+# Method 1: From an active environment
+uvve activate myproject
+uvve python bump 3.12         # Bumps current environment to Python 3.12
+
+# Method 2: Specify environment explicitly
+uvve python bump 3.12 myproject  # Bumps 'myproject' to Python 3.12
+
+# Remove unused Python versions
+uvve python remove 3.10
+```
+
+**Python Version Bumping Process:**
+
+1. **Validation**: Checks that target Python version is available
+2. **Dependency Preservation**: Creates lockfile of current packages
+3. **Environment Recreation**: Creates temporary environment with new Python version
+4. **Package Restoration**: Restores all dependencies from lockfile
+5. **Seamless Replacement**: Replaces old environment with new one
+
+**Example: Upgrading a Project**
+
+```bash
+# Start with Python 3.11 environment
+uvve create myproject 3.11
+uvve activate myproject
+uvve add requests django
+
+# Later, upgrade to Python 3.12 while keeping all packages
+uvve python bump 3.12
+# ✓ Environment 'myproject' successfully bumped to Python 3.12
+# ✓ All packages (requests, django) preserved
+
+# Verify the upgrade
+uvve freeze myproject  # Shows same packages, now on Python 3.12
+```
+
+**Use Cases:**
+
+- 🚀 **Project Upgrades**: Modernize projects to latest Python versions
+- 🔧 **Testing Compatibility**: Verify code works on different Python versions
+- 🛠️ **Maintenance**: Keep development environments current with security updates
+- 📦 **Package Requirements**: Upgrade when dependencies require newer Python versions
+
 ### Azure DevOps Integration
 
 Set up private package feeds with automatic authentication:
@@ -276,10 +336,12 @@ uvve --show-completion >> ~/.zshrc
 
 ### Command Reference
 
-| Command                         | Description                                                               |
-| ------------------------------- | ------------------------------------------------------------------------- |
-| `uvve python install <version>` | Install a Python version using uv                                         |
-| `uvve python list`              | List available and installed Python versions                              |
+| Command                            | Description                                                               |
+| ---------------------------------- | ------------------------------------------------------------------------- |
+| `uvve python install <version>`    | Install a Python version using uv                                         |
+| `uvve python list`                 | List available and installed Python versions                              |
+| `uvve python bump <version> [env]` | Upgrade environment to newer Python version while preserving dependencies |
+| `uvve python remove <version>`     | Remove an installed Python version                                        |
 | `uvve create <name> <version>`  | Create a virtual environment with optional metadata                       |
 | `uvve activate <name>`          | Activate environment (with shell integration) or print activation snippet |
 | `uvve local <name>`             | Create .uvve-version file for automatic directory-based activation        |

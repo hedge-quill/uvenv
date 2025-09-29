@@ -1,12 +1,12 @@
 """Environment management commands."""
 
 import typer
+from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 
 from uvve.core.manager import EnvironmentManager
 from uvve.shell.activate import ActivationManager
-from pathlib import Path
 
 console = Console()
 
